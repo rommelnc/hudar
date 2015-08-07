@@ -1,0 +1,89 @@
+Política
+========================================================
+
+
+
+```{r }
+#install_github('rCharts', 'ramnathv', ref = 'dev')
+require(streamR)
+library(rCharts)
+# rCharts::open_notebook()
+# tweets <- parseTweets("../../data/politics-tweets-2014-05-14.json", simplify = TRUE)
+# tweets <- rbind(tweets, parseTweets("../../data/politics-tweets-2014-05-15-antes de travar.json", simplify = TRUE))
+# tweets <- rbind(tweets, parseTweets("../../data/politics-tweets-2014-05-15.json", simplify = TRUE))
+# save(tweets, file='../../data/politics-tweets-2014-05-14 e 15.Rda')
+load('../../data/politics-tweets-2014-05-16a19.Rda')
+
+# eleicoes = tweets[grep("eleicao|eleição|eleicoes|eleições|Dilma Rousseff|Aécio Neves|Aecio Neves|Eduardo Campos|Marina Silva", tweets$text, ignore.case=TRUE),][1:500,]
+eleicoes = tweets[1:100,]
+
+eleicoes$text = gsub("[^[:graph:]]", " ",eleicoes$text) #remove caracteres inválidos
+
+source('funcoesTwitter.R')
+
+# Encoding(eleicoes$text) = 'ISO-8859-1'
+
+lista = montarListaUsuarios(eleicoes)
+tabelas = montarTabelasUsuarios(lista$listaDePara)
+```
+
+Os 10 tweets mais frequentes:
+
+```{r }
+sort(table(eleicoes$text), decreasing=T)[1:10]
+```
+
+Before we begin charting, let us customize some settings for rCharts and knitr
+
+```{r echo = T, message = F, cache = F}
+require(rCharts)
+options(RCHART_WIDTH = 600, RCHART_HEIGHT = 400)
+knitr::opts_chunk$set(comment = NA, results = 'asis', tidy = F, message = F)
+```
+
+<style>.rChart {width: 600px; height: 400px;}</style>
+
+Gráficos:
+
+```{r chart1}
+maisFreq = sort(table(eleicoes$text), decreasing=T)[1:10]
+tweets = paste(names(maisFreq), collapse="@!K#$%@")
+
+df1 = as.data.frame(names(tabelas$maisFalou[1:10]))
+df1$qtd = array(tabelas$maisFalou[1:10])
+df1$tweets = tweets
+names(df1) = c("usuario", "qtd", "tweets")
+n1 = nPlot(x="usuario", y="qtd", data=df1, type="discreteBarChart")
+n1$xAxis(rotateLabels = -20)
+n1$xAxis(axisLabel = "Usuários") 
+n1$yAxis(axisLabel = "Quantidade de Tweets")
+n1$chart(margin = list(left = 90))
+n1$chart(margin = list(bottom = 100))
+# n1$templates$script <- "http://timelyportfolio.github.io/rCharts_nvd3_templates/chartWithTitle.html"
+n1$set(title = "Os 10 usuários que mais falaram")
+
+
+n1$chart(tooltipContent= "#! function(key, x, y, e){
+  var tweets = e.point.tweets.split('@!K#$%@');
+  var result = '';
+  tweets.forEach(function(tweet) {
+      result += tweet + '<br/>'
+  });
+  return result;
+} !#")
+n1$print('chart1')
+```
+
+```{r fig.width=10, fig.height=8}
+barplot(tabelas$maisFalado[1:10], las=2)
+title('Os 10 usuários mais falados')
+```
+
+```{r fig.width=10, fig.height=8}
+barplot(tabelas$maisOcorrencias[1:10], las=2)
+title('Os 10 usuários com mais ocorrências')
+```
+
+```{r}
+
+```

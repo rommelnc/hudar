@@ -1,0 +1,190 @@
+Política
+========================================================
+
+
+
+```{r }
+# system("defaults write org.R-project.R force.LANG en_US.UTF-8")
+require(streamR)
+source('funcoesTwitter.R', encoding='UTF-8')
+dia = '2014-06-25'
+dia = '2014-06-26'
+dia = '2014-06-27'
+dia = '2014-06-28'
+dia = '2014-06-29'
+dia = '2014-06-30'
+dia = '2014-07-01'
+dia = '2014-07-02'
+tweets = joinTweets(dia)
+dia = '2014-07-03'
+dia = '2014-07-04'
+dia = '2014-07-05'
+dia = '2014-07-06'
+dia = '2014-07-07'
+dia = '2014-07-08'
+
+# Parei no dia 05/10... arquivos estão muito grandes, tem que quebrar em arquivos menores...
+dia = as.Date('2014-10-05')
+for (i in 1:1) {
+  tweets = joinTweets(dia, TRUE)
+  arquivo = paste0("../../data/politics-tweets-", dia, "-all.Rda")
+  save(tweets, file=arquivo)
+  dia = dia + 1
+}
+
+## join dos temas pedidos pela Izabela
+source('funcoesTwitter.R', encoding='UTF-8')
+dia = as.Date('2014-09-09')
+for (i in 1:13) {
+  tweets = joinTweets(dia, TRUE, '/Volumes/Backup HD/rommelnc/Dropbox/Research/Política/Servidor Remoto/data/liberdade-seguranca-tweets-', all = FALSE)
+  arquivo = paste0("../../data/liberdade-seguranca-tweets-", dia, "-all.Rda")
+  save(tweets, file=arquivo)
+  dia = dia + 1
+}
+
+## Salvando o dia incompleto (ou não, depende da hora que rodar) para ter o que mostrar para Eliane da Folha
+dia = as.Date('2014-08-31')
+tweets = joinTweets(dia, TRUE)
+arquivo = paste0("../../data/politics-tweets-", dia, "-all.Rda")
+save(tweets, file=arquivo)
+
+
+dia = as.Date('2014-07-13')
+tweets = data.frame()
+for (i in 1:6) {
+  print(paste0('Started block ', i, ' at ', Sys.time()))
+  arquivo = paste0("../../data/politics-tweets-", dia, "-", i, ".json")
+  tweets = rbind(tweets, parseTweets(arquivo, simplify = FALSE))
+  print(paste0('Finished block ', i, ' at ', Sys.time()))
+  save(tweets, file=paste0("../../data/politics-tweets-", dia, '-all.Rda'))
+}
+arquivo = paste0("../../data/politics-tweets-", dia, "-", 2, ".json")
+tweets = rbind(tweets, parseTweets(arquivo, simplify = FALSE))
+
+
+
+
+source('salvaLinkEleicoes.R', encoding='UTF-8')
+dia = as.Date('2014-08-13')
+for (i in 1:4) {
+  joinTweets(dia, TRUE)
+  arquivo = paste0("../../data/politics-tweets-", dia, "-all.Rda")
+  salvaLinkEleicoesRda(arquivo)
+  dia = dia + 1
+}
+
+source('salvaLinkEleicoes.R', encoding='UTF-8')
+dia = as.Date('2014-08-27')
+for (i in 1:1) {
+  arquivo = paste0("../../data/politics-tweets-", dia, "-all.Rda")
+  salvaLinkEleicoesRda(arquivo)
+  dia = dia + 1
+}
+
+library(streamRmongo)
+library(rmongodb)
+source('tweetsToMongoBatch.R', encoding = 'UTF-8')
+arquivos = list.files('../data/', pattern='json', full.names=TRUE)
+arquivos = list.files('../data/', pattern='2014-09-.*json', full.names=TRUE)
+arquivos
+## Pulei dia 13/07 por estar muito grande
+## Pulei dia 13/08 por estar muito grande
+arquivos = arquivos[-c(1:46)]
+arquivos = arquivos[-c(1:161)]
+arquivos = arquivos[-c(10)]
+for (arquivo in arquivos) {
+  ini = Sys.time()
+  print(paste0('Carregando arquivo ', arquivo))
+#   tweetsToMongo(file.name=arquivo, ns='twitter.tweets', host='localhost')
+  tweetsToMongoBatch(file.name=arquivo, ns='twitter.tweets', host='localhost')
+  print(Sys.time() - ini)
+}
+
+load(arquivo)
+
+arquivo = paste0("../../data/politics-tweets-", dia, "-copa-1.json")
+tweets = parseTweets(arquivo, simplify = FALSE)
+jogo = tweets[grep("#BRA|#ALE|#GER", tweets$text, ignore.case=TRUE),]
+for (i in 2:14) {
+  arquivo = paste0("../../data/politics-tweets-", dia, "-copa-", i, ".json")
+  tweets = parseTweets(arquivo, simplify = FALSE)
+  jogo = rbind(jogo, tweets[grep("#BRA|#ALE|#GER", tweets$text, ignore.case=TRUE),])
+  remove(tweets)
+}
+arquivo = paste0("../../data/politics-tweets-", dia, "-copa-jogo.Rda")
+tweets = jogo
+remove(jogo)
+save(tweets, file=arquivo)
+remove(tweets)
+load(arquivo)
+
+## Remover tweets com MTVHottest One Direction dos tweets de eleições
+arquivo = '../../data/politics-tweets-2014-07-16-to-2014-07-30-all.Rda'
+load(arquivo)
+save(eleicoes, file='../../data/politics-tweets-2014-07-16-to-2014-07-30-eleicoes.Rda')
+errados = grep("MTVHottest|One Direction", eleicoes$text, ignore.case=TRUE)
+eleicoes = eleicoes[-errados,]
+save(tweets, eleicoes, topLinksEleicoes, file=arquivo)
+
+# tweets <- parseTweets("../../data/politics-tweets-2014-05-23.json", simplify = FALSE)
+# save(tweets, file='../../data/politics-tweets-2014-05-23.Rda')
+# load('../../data/politics-tweets-2014-05-23.Rda')
+# tweets <- rbind(tweets, parseTweets("../../data/politics-tweets-2014-05-17.json", simplify = FALSE))
+# tweets <- rbind(tweets, parseTweets("../../data/politics-tweets-2014-05-18.json", simplify = FALSE))
+# tweets <- rbind(tweets, parseTweets("../../data/politics-tweets-2014-05-19.json", simplify = FALSE))
+# tweets <- rbind(tweets, parseTweets("../../data/politics-tweets-2014-05-20.json", simplify = FALSE))
+# tweets <- rbind(tweets, parseTweets("../../data/politics-tweets-2014-05-21.json", simplify = FALSE))
+# tweets <- rbind(tweets, parseTweets("../../data/politics-tweets-2014-05-22.json", simplify = FALSE))
+# tweets <- rbind(tweets, parseTweets("../../data/politics-tweets-2014-05-23.json", simplify = FALSE))
+# save(tweets, file='../../data/politics-tweets-2014-05-16a23.Rda')
+load('../../data/politics-tweets-2014-05-16a23.Rda')
+
+source('funcoesTwitter.R')
+
+# eleicoes = tweets[grep("eleicao|eleição|eleicoes|eleições|Dilma Rousseff|Aécio Neves|Aecio Neves|Eduardo Campos|Marina Silva", tweets$text, ignore.case=TRUE),]
+eleicoes = pesquisarTweets(tweets)
+# palavras = c("eleicao", "eleicoes", "dilma", "rousseff", "aecio", "neves", "eduardo", "campos", "marina", "silva")
+palavras = recuperarPalavras()
+g = criarGrafo(textos=eleicoes$text, remove=palavras)
+
+# eleicoes$text <- iconv(eleicoes$text, from = "UTF-8", to = "ISO-8859-1")
+# Encoding(eleicoes$text) <- "UTF-8"
+# eleicoes$text = iconv(eleicoes$text, "UTF-8", "ISO-8859-1", sub='')
+# eleicoes$text
+
+# Encoding(eleicoes$text) = 'ISO-8859-1'
+
+lista = montarListaUsuarios(eleicoes)
+tabelas = montarTabelasUsuarios(lista$listaDePara)
+```
+
+Os 10 tweets mais frequentes:
+
+```{r }
+sort(table(eleicoes$text), decreasing=T)[1:10]
+```
+
+Gráficos:
+
+```{r fig.width=10, fig.height=8}
+barplot(tabelas$maisFalou[1:10], las=2)
+title('Os 10 usuários que mais falaram')
+```
+
+```{r fig.width=10, fig.height=8}
+barplot(tabelas$maisFalado[1:10], las=2)
+title('Os 10 usuários mais falados')
+```
+
+```{r fig.width=10, fig.height=8}
+barplot(tabelas$maisOcorrencias[1:10], las=2)
+title('Os 10 usuários com mais ocorrências')
+```
+
+```{r fig.width=10, fig.height=8}
+usuariosRTs = montarListaUsuariosRTs(eleicoes)
+tabela = sort(table(usuariosRTs), decreasing=T)
+barplot(tabela[1:10], las=2)
+title('Os 10 usuários que mais foram retweetados (RTs)')
+```
+

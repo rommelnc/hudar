@@ -1,0 +1,71 @@
+
+
+```{r}
+load('../../data/politics-tweets-2014-07-04-copa-jogo.Rda')
+tweets = tweets[grep("#BRA |#COL |#BRAvCOL|#BRAvsCOL", tweets$text, ignore.case=TRUE),]
+save(tweets, file='../../data/politics-tweets-2014-07-04-copa-jogo-simples.Rda')
+load('../../data/politics-tweets-2014-07-04-copa-jogo-simples.Rda')
+
+# Separa tweets por termo desejado
+tweetsBra = tweets[grep("#BRA", tweets$text, ignore.case=TRUE),]
+tweetsCol = tweets[grep("COL", tweets$text, ignore.case=TRUE),]
+tweetsBraVsCol = tweets[grep("#BRAvCOL|#BRAvsCOL", tweets$text, ignore.case=TRUE),]
+#Sys.setlocale("LC_TIME", "C")
+# Recupera quantidade de tweets por hora
+source('funcoesTwitter.R')
+refBra = referenceByHour(tweetsBra)
+refBra$grupo = '#BRA'
+refCol = referenceByHour(tweetsCol)
+refCol$grupo = '#COL'
+refBraVsCol = referenceByHour(tweetsBraVsCol)
+refBraVsCol$grupo = '#BRAvCOL ou #BRAvsCOL'
+
+# Plota o gráfico das referências por hora
+refs = rbind(refBra, refCol, refBraVsCol)
+refs = refs[refs$Dia != as.POSIXlt('07/05', format="%m/%d"),]
+plotReferencesByHour(refs)
+
+
+# Tweets
+tweets$created_at2 = strptime(tweets$created_at, "%a %b %d %H:%M:%S %z %Y")
+tweets[tweets$created_at2$hour == 17 & tweets$retweet_count == 4245,]$text
+tweets[tweets$created_at2$hour == 17 & tweets$retweet_count == 4245,]
+tweets[tweets$created_at2$hour == 17  & tweets$retweet_count > 0,][51:100,]$text
+tweets[tweets$created_at2$hour == 17  & tweets$retweet_count > 0,][51,]
+tweets[grep('http', tweets[tweets$created_at2$hour == 17  & tweets$retweet_count > 0,]$text),][30,]
+
+nrow(tweets[tweets$created_at2$hour == 20  & tweets$retweet_count > 0,])
+tweets[tweets$created_at2$hour == 20  & tweets$retweet_count > 0,][8800,]
+
+
+eleicoes$created_at2 = strptime(eleicoes$created_at, "%a %b %d %H:%M:%S %z %Y")
+eleicoes[eleicoes$created_at2$hour == 7  & eleicoes$retweet_count > 0,][11,]
+eleicoes[eleicoes$created_at2$hour == 7  & eleicoes$retweet_count > 0,][21,]
+eleicoes[eleicoes$created_at2$hour == 17  & eleicoes$retweet_count > 0,][11,]
+eleicoes[eleicoes$created_at2$hour == 19  & eleicoes$retweet_count > 100,][11,]
+eleicoes[eleicoes$created_at2$hour == 19  & eleicoes$retweet_count > 5,][10,]
+
+
+# Comparação com a campanha pra eleição presidencial
+load('../../data/politics-tweets-2014-07-04-all.Rda')
+eleicoes = recuperarTweetsEleicoes(tweets)
+
+## Gráfico de menções dos candidatos à presidência
+usuarios = data.frame(usuario=c('dilmabr', 'AecioNeves', 'eduardocampos40', 'silva_marina'), nome=c('Dilma', 'Aécio', 'Eduardo', 'Marina'), palavras=c('Dima Rouseff','Aécio Neves|Aecio Neves','Eduardo Campos','Marina Silva'))
+refs = referencesByUserByHour(tweets, usuarios)
+refs = refs[refs$Dia != as.POSIXlt('07/05', format="%m/%d"),]
+plotReferencesByHour(refs)
+
+## Gráfico de menções dos candidatos à presidência, agrupando Eduardo e Marina
+refs2 = refs
+refs2$grupo = as.character(refs2$grupo)
+refs2[refs2$grupo == 'Eduardo',]$Referencias = refs2[refs2$grupo == 'Eduardo',]$Referencias + refs2[refs2$grupo == 'Marina',]$Referencias
+refs2[refs2$grupo == 'Eduardo',]$grupo = 'Eduardo ou Marina'
+refs2 = refs2[refs2$grupo != 'Marina',]
+plotReferencesByHour(refs2)
+
+## Gráfico de menções dos candidatos à presidência, todos
+refs3 = rbind(refs, refs2[refs2$grupo == 'Eduardo ou Marina',])
+plotReferencesByHour(refs3)
+
+```

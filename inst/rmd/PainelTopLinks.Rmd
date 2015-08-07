@@ -1,0 +1,426 @@
+
+
+```{r echo = F, message = F, cache = F}
+inicio = Sys.time()
+options(RCHART_WIDTH = NA, RCHART_HEIGHT = NA)
+knitr::opts_chunk$set(comment = NA, results = 'asis', tidy = F, message = F)
+source('funcoesTwitter.R', encoding='UTF-8')
+source('salvaLinkEleicoes.R', encoding='UTF-8')
+
+```
+
+```{r echo=FALSE, cache = F}
+
+
+#load('../../data/politics-tweets-2014-06-24.Rda')
+#tweets$text = gsub("[^[:graph:]]", " ",tweets$text)
+
+#eleicoes_full = tweets[grep("eleicao|eleição|eleicoes|eleições|Dilma Rousseff|Aécio Neves|Aecio Neves|Eduardo Campos|Marina Silva|aecio|dilma|marina|presidencia|presidência|lula|presidenta|pt|psb|psdb", tweets$text, ignore.case=TRUE),]
+
+#eleicoes = eleicoes_full
+```
+
+
+```{r echo=FALSE, cache = F}
+
+getTweetsFromFullUrl = function(url, tweets, decodedLinks){ 
+  short_links = names(which(decodedLinks == url))
+  tweetsWithUrl = lapply(short_links, function(x) grep(x, tweets$text))
+  tweetsWithUrl = unique(unlist(tweetsWithUrl))  
+  tweetsWithUrl = tweets[tweetsWithUrl,]
+  tweetsWithUrl
+}
+
+getUrlsFromTweets = function(tweets, decodedLinks, table = FALSE) {
+  short_links = getShortLinks(tweets)
+  urls = sapply(short_links, function(x) decodedLinks[x])
+  urls = as.character(unlist(urls))
+  if (table == TRUE) {
+    urls = sort(table(urls), decreasing=TRUE)
+  }
+  urls
+}
+
+# decode_short_url <- function(url, ...) {
+#   # PACKAGES #
+#   require(RCurl)
+#   
+#   # LOCAL FUNCTIONS #
+#   decode <- function(u, tries) {
+#     cat(paste("teste", u, "\n"))
+#     x <- try( getURL(u, header = TRUE, nobody = TRUE, followlocation = FALSE, cainfo = system.file("CurlSSL", "cacert.pem", package = "RCurl")) )
+#     if(inherits(x, 'try-error') | length(grep(".*[lL]ocation: (\\S+).*", x))<1) {
+#       return(u)
+#     } else {
+#       ret = gsub(".*[lL]ocation: (\\S+).*", "\\1", x)
+#       if (str_length(ret) < 40 & tries < 4 ) {
+#         return(decode(ret, tries+1))
+#       }
+#       else {
+#         return(ret)
+#       }
+#     }
+#   }
+#   
+#   # MAIN #
+#   # return decoded URLs
+#   urls <- c(url, ...)
+#   l <- lapply(urls, decode, tries = 0)
+#   names(l) <- urls
+#   return(l)
+# }
+# 
+# 
+# getShortLinks = function(tweets){
+#   library(stringr)
+#   links = str_extract_all(tweets$text, "(https?://t.co[^(\n|\t| |\")][^(\n|\t| |\")]+)")
+#   links = unlist(links)
+#   links = links[str_length(links) > 20]
+#   links
+# }
+# 
+# 
+# getDecodedLinks = function(tweets){
+#   links = getShortLinks(tweets)
+#   uniq = unique(links)
+#   decoded = decode_short_url(uniq)
+#   decodedLinks = links
+#   m = match(links, names(decoded))
+#   change <- !is.na(m)
+#   decodedLinks[change] <- decoded[m[change]]
+#   decodedLinks
+# }
+
+
+#links = getDecodedLinks(eleicoes[1:2000,])
+#topLinks = sort(table(as.character(links)), decreasing=TRUE)
+#restantes = topLinks
+
+#save(topLinks, file = "toplinks.Rda")
+#load("../../data/politics-tweets-2014-07-04-all.Rda")
+#load("../../data/politics-tweets-2014-07-04-copa-jogo.Rda")
+# load("../../data/politics-tweets-2014-07-04-copa-jogo-simples.Rda")
+# load("../../data/politics-tweets-2014-07-08-copa-jogo-simples.Rda")
+# load("../../data/politics-tweets-2014-07-08-all.Rda")
+#load("../../data/politics-tweets-2014-07-01-to-2014-07-31-eleicoes.Rda")
+#load("../../data/politics-tweets-2014-08-17-to-2014-08-20-eleicoes-all.Rda")
+#restantes = sort(table(unlist(linkEleicoes)), decreasing = TRUE)
+load('../../data/politics-tweets-2014-08-17-to-2014-08-20-eleicoes-all.Rda')
+load('../../data/politics-tweets-2014-08-17-to-2014-08-20-eleicoes-all-resultado.Rda')
+restantes = getUrlsFromTweets(resultado$tweets[[1]], links, TRUE)
+
+```
+<style>
+  body {
+    width:920px;
+    
+  }
+</style>
+
+<script type='text/javascript' src=http://code.jquery.com/jquery-1.9.1.min.js></script>
+<script>
+(function ($) {
+    $.fn.showHide = function (options) {
+ 
+    //default vars for the plugin
+        var defaults = {
+            speed: 1000,
+            easing: "",
+            changeText: 0,
+            showText: "Show",
+            hideText: "Hide"
+ 
+        };
+        var options =  $.extend(defaults, options);
+ 
+        $(this).click(function () {
+// optionally add the class .toggleDiv to each div you want to automatically close
+                      $(".toggleDiv").slideUp(options.speed, options.easing);
+             // this var stores which button you"ve clicked
+             var toggleClick = $(this);
+             // this reads the rel attribute of the button to determine which div id to toggle
+             var toggleDiv = $(this).attr("rel");
+             // here we toggle show/hide the correct div at the right speed and using which easing effect
+             $(toggleDiv).slideToggle(options.speed, options.easing, function() {
+             // this only fires once the animation is completed
+             if(options.changeText==1){
+             $(toggleDiv).is(":visible") ? toggleClick.text(options.hideText) : toggleClick.text(options.showText);
+             }
+              });
+ 
+          return false;
+ 
+        });
+ 
+    };
+})(jQuery);
+</script>
+
+<script>
+$(document).ready(function(){
+ 
+   $(".show_hide").showHide({
+        speed: 1000,  // speed you want the toggle to happen
+        easing: "",  // the animation effect you want. Remove this line if you dont want an effect and if you haven"t included jQuery UI
+        changeText: 0, // if you dont want the button text to change, set this to 0
+        showText: "View",// the button text to show when a div is closed
+        hideText: "Close" // the button text to show when a div is open
+ 
+    });
+ 
+});
+</script>
+
+
+
+```{r echo=FALSE, cache = F}
+#quantidade de itens a serem mostrados
+qtdTweets = 6
+qtdFacebook = 6
+qtdInstagram = 6
+qtdYoutube = 6
+qtdNoticias = 8
+
+```
+
+
+
+
+<script type='text/javascript' src="//platform.twitter.com/widgets.js"></script>
+<style>
+  div.tweets_images_class {
+    text-align:center;
+  }
+	div.engloba_tweet {
+		display:inline-block;
+		height:600px;
+    width:450px;
+		overflow-y: scroll;
+		text-align:center;
+		box-shadow: 0px 0px 8px #54A9EB;
+		margin:3px;
+	}
+</style>
+
+<div style=" background-color: #54A9EB;   /*font-family: Georgia, Serif;*/">
+<div class="show_hide" rel="#tweets_images_id" style = "color: white; cursor:pointer; text-align:center"><hr/><h2 style="color: white;"><img src='http://icons.iconarchive.com/icons/lunartemplates/modern-social-media-rounded/64/Twitter-icon.png' alt='...' height='64' width='64'><br>Imagens do Twitter mais vistas</h2><hr/></div>
+```{r echo=FALSE, cache=F}
+indices = grep("twitter.com(\\S+).*/photo", names(restantes))
+topTwitterImages = restantes[indices]
+restantes = restantes[-indices]
+
+
+fontsizes = array(topTwitterImages[1:qtdTweets])
+fontsizes = ( (fontsizes - min(fontsizes)) * (90-30)/(max(fontsizes)-min(fontsizes)) ) + 30
+
+
+cat("<div class='tweets_images_class ' id='tweets_images_id' style='display:none;'>\n", sep="")
+  for (j in 1:qtdTweets) {
+    cat("\t<div class='engloba_tweet'>\n", sep="")
+    cat("<div style='height:110px;line-height: 110px;' >")
+    cat("\t<span style='color: white; font-size: ",fontsizes[j],"px; vertical-align:middle;'>",array(topTwitterImages[j]),"</span>", sep="")
+    cat("<span style='color: white; font-size: 17px;'> pessoas twittaram sobre isso</span>\n", sep="")
+    cat("</div>")
+    cat("\t\t<blockquote class='twitter-tweet'><a href='", names(topTwitterImages[j]),"'><img src='http://www.annualcreditreport.co.uk/media/images/widgets/loader.gif' alt='...' height='64' width='64'></a></blockquote>\n", sep="")      
+    cat("\t</div>\n")
+  }
+cat("</div>\n")
+```
+</div>
+
+
+
+<div id="fb-root"></div> <script>(function(d, s, id) { var js, fjs = d.getElementsByTagName(s)[0]; if (d.getElementById(id)) return; js = d.createElement(s); js.id = id; js.src = "//connect.facebook.net/en_GB/all.js#xfbml=1"; fjs.parentNode.insertBefore(js, fjs); }(document, 'script', 'facebook-jssdk'));</script>
+
+<style>
+  div.facebook_images_class {
+    text-align:center;
+  }
+  div.engloba_facebook_post {
+		display:inline-block;
+		height:650px;
+    width:450px;
+		overflow-y: scroll;
+		text-align:center;
+		box-shadow: 0px 0px 8px #46629E;
+		margin:3px;
+	}
+</style>
+
+<div style="background-color: #46629E; /*font-family: Georgia, Serif;*/ ">
+<div class="show_hide" rel="#facebook_images_id" style = "color: white; cursor:pointer; text-align:center"><hr/><h2 style="color: white;"><img src='http://icons.iconarchive.com/icons/lunartemplates/modern-social-media-rounded/64/Facebook-icon.png' alt='...' height='64' width='64'><br>Imagens do facebook mais vistas</h2><hr/></div>
+```{r echo=FALSE, cache=F}
+indices = grep("facebook.com/", names(restantes))
+topFacebookImages = restantes[indices]
+restantes = restantes[-indices]
+
+fontsizes = array(topFacebookImages[1:qtdFacebook])
+fontsizes = ( (fontsizes - min(fontsizes)) * (90-30)/(max(fontsizes)-min(fontsizes)) ) + 30
+
+cat("<div class='facebook_images_class' id='facebook_images_id' style='display:none;'>\n", sep="")
+  for (j in 1:qtdFacebook) {
+    cat("\t<div class='engloba_facebook_post'>\n", sep="")
+    cat("<div style='height:110px;line-height: 110px;' >")
+    cat("\t<span style='color: white; font-size: ",fontsizes[j],"px; vertical-align:middle;'>",array(topFacebookImages[j]),"</span>", sep="")
+    cat("<span style='color: white; font-size: 17px;'> pessoas twittaram sobre isso</span>\n", sep="")
+    cat("</div>")
+    cat("\t\t<div class='fb-post' data-width='410' data-href='",names(topFacebookImages[j]),"'>",names(topFacebookImages[j]),"</div>\n",sep="")
+    cat("\t</div>\n")
+    
+  }
+cat("</div>\n")
+```
+</div>
+
+<style>
+  div.instagram_images_class {
+    text-align:center;
+  }
+  div.engloba_instagram_post {
+  	display:inline-block;
+		height:670px;
+    width:450px;
+		overflow-y: scroll;
+		text-align:center;
+		box-shadow: 0px 0px 8px #447298;
+		margin:3px;
+	}
+</style>
+
+<div style="background-color: #447298; /*font-family: Georgia, Serif;*/ ">
+<div  class="show_hide" rel="#instagram_images_id" style = "color: white; cursor:pointer; text-align:center"><hr/><h2 style="color: white;"><img src='http://icons.iconarchive.com/icons/designbolts/free-instagram/64/Active-Instagram-3-icon.png' alt='...' height='64' width='64'><br>Imagens do Instagram mais vistas</h2><hr/></div>
+```{r echo=FALSE, cache=F}
+indices = grep("instagram.com/p/", names(restantes))
+topInstagramImages = restantes[indices]
+restantes = restantes[-indices]
+
+
+fontsizes = array(topInstagramImages[1:qtdInstagram])
+fontsizes = ( (fontsizes - min(fontsizes)) * (90-30)/(max(fontsizes)-min(fontsizes)) ) + 30
+
+#Busca os ids dos videos
+instagramLinks = sub("https?:", "", names(topInstagramImages))
+instagramLinks = paste(instagramLinks,"embed",sep="")
+
+cat("<div class='instagram_images_class' id='instagram_images_id' style='display:none;'>\n", sep="")
+  for (j in 1:qtdInstagram) {
+    cat("\t<div class='engloba_instagram_post'>\n", sep="")
+    cat("<div style='height:110px;line-height: 110px;' >")
+    cat("\t<span style='color: white; font-size: ",fontsizes[j],"px; vertical-align:middle;'>",array(topInstagramImages[j]),"</span>", sep="")
+    cat("<span style='color: white; font-size: 17px;'> pessoas twittaram sobre isso</span>\n", sep="")
+    cat("</div>")
+    cat("\t\t<iframe src='",instagramLinks[j],"' width='430' height='550' frameborder='0' scrolling='no' allowtransparency='true'></iframe>\n",sep="")
+    cat("\t</div>\n")
+    
+  }
+cat("</div>\n")
+
+```
+</div>
+
+<style>
+
+  div.youtube_videos_class {
+    text-align:center;
+  }
+  div.engloba_video {
+  	display:inline-block;
+		height:425px;
+		width:450px;
+		text-align:center;
+		box-shadow: 0px 0px 8px #df2826
+		margin:3px;
+	}
+</style>
+
+
+<div style="background-color: #df2826; /*font-family: Georgia, Serif;*/ ">
+<div class="show_hide" rel="#youtube_videos_id" style = "color: white; cursor:pointer; text-align:center"><hr/><h2 style="color: white;"><img src='http://icons.iconarchive.com/icons/wwalczyszyn/android-style-honeycomb/64/YouTube-icon.png' alt='...' height='64' width='64'><br>Vídeos do YouTube mais vistos</h2><hr/></div>
+```{r echo=FALSE, cache=F}
+indices = grep("www.youtube.com/watch?", names(restantes))
+topVideos = restantes[indices]
+restantes = restantes[-indices]
+
+fontsizes = array(topVideos[1:qtdYoutube])
+fontsizes = ( (fontsizes - min(fontsizes)) * (90-30)/(max(fontsizes)-min(fontsizes)) ) + 30
+
+#Busca os ids dos videos
+ids = sub("https?://www.youtube.com/watch\\?v=", "", names(topVideos))
+ids = sub("&.*", "", ids)
+
+
+cat("<div class='youtube_videos_class' id='youtube_videos_id' style='display:none;'>\n", sep="")
+  for (j in 1:qtdYoutube) {
+    cat("\t<div class='engloba_video'>\n", sep="")
+    cat("<div style='height:110px;line-height: 110px;' >")
+    cat("\t<span style='color: white; font-size: ",fontsizes[j],"px; vertical-align:middle;'>",array(topVideos[j]),"</span>", sep="")
+    cat("<span style='color: white; font-size: 17px;'> pessoas twittaram sobre isso</span>\n", sep="")
+    cat("</div>")
+    cat("\t<iframe width='450' height='400' src='http://www.youtube.com/embed/", ids[j],"'><img src='http://www.annualcreditreport.co.uk/media/images/widgets/loader.gif' alt='...' height='64' width='64'></iframe>\n", sep="")
+    cat("\t</div>\n")
+  }
+cat("</div>\n")
+
+
+
+```
+</div>
+
+
+<style>
+  div.articles_class {
+    text-align:center;
+  }
+  
+  div.engloba_article {
+    display:inline-block;
+  	height:500px;
+  	width:95%;
+  	text-align:center;
+  }
+</style>
+
+
+<div style="/*font-family: Georgia, Serif;*/ background-color: #F5F5F5;">
+<div class="show_hide" rel="#articles_id" style = "color: black; cursor:pointer; text-align:center"><hr/><h2 style="color: black;"><img src='http://icons.iconarchive.com/icons/designcontest/ecommerce-business/64/news-icon.png' alt='...' height='64' width='64'><br>Notícias mais vistas</h2><hr/></div>
+```{r echo=FALSE, cache=F}
+#indices = grep("globo.com/", names(restantes))
+#topG1 = restantes[indices]
+#restantes = restantes[-indices]
+
+#remove noticias do z100
+#pensar em fazer uma parada para o vine.co
+indices = grep("z100.com|facebook.com|vine.co|t.co", names(restantes))
+lixo = restantes[indices]
+if (length(lixo) > 0) {
+  restantes = restantes[-indices]
+}
+
+fontsizes = array(restantes[1:qtdNoticias])
+fontsizes  = ( (fontsizes - min(fontsizes)) * (90-30)/(max(fontsizes)-min(fontsizes)) ) + 30
+
+cat("<div class='articles_class' id='articles_id' style='display:none;'>\n", sep="")
+
+    i = 1
+    while (i <= qtdNoticias) {
+      cat("\t<div class='engloba_article'>\n", sep="")
+      cat("<div style='height:110px;line-height: 110px;' >")
+      cat("\t<span style='color: black; font-size: ",fontsizes[i],"px; vertical-align:middle;'>",array(restantes[i]),"</span>", sep="")
+      cat("<span style='color: black; font-size: 17px;'> pessoas twittaram sobre isso</span>\n", sep="")
+      cat("</div>")
+      cat("\t<iframe width='100%' height='500' style='background-color: white;' src='", names(restantes[i]),"'><img src='http://www.annualcreditreport.co.uk/media/images/widgets/loader.gif' alt='...' height='64' width='64'></iframe>\n", sep="")
+      cat("\t</div>\n")
+      
+      i = i+1
+    }
+
+cat("</div>\n")
+```
+</div>
+
+```{r echo=FALSE, cache=F}
+fim = Sys.time()
+# print('Tempo total:')
+# print(fim - inicio)
+```
+

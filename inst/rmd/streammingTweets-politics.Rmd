@@ -1,0 +1,351 @@
+Streamming Tweets
+========================================================
+
+Downloading tweets...
+
+```{r}
+library(devtools)
+install_github("streamR", "pablobarbera", subdir="streamR")
+library(streamR)
+```
+
+This is how it is done...
+
+```{r}
+rastrear = c("Brasil", "Brazil", "congresso", "camara","câmara","senado","voto secreto","voto aberto","deputado","senador","marco civil da internet","neutralidade da rede","aborto","governo","governador","partido político", "partido politico","Renan", "Calheiros", "PMDB", "projeto lei", "PL", "PEC", "constituição", "constituicao","corrupção", "corrupcao",
+  "eleição","eleicao", "eleições", "eleicoes", "eleitoral", "presidente", "presidência", "presidencia", "presidenta",  "Dilma Rousseff", "dilmabr", "Lula", "Aécio Neves", "Aecio Neves", "Aecio45Oficial", "AecioNeves", "_AecioNeves_", "AecioNevesbr", "Eduardo Campos", "eduardocampos40",  "Marina Silva", "silva_marina", "campanha", "politica", "política", "voto", "vata", "vote", "vot", "votação", "votacao", 
+  "CPI", "Petrobras", "Petrobrás", "inflação", "metrô", "metro",
+  "ficha limpa", "ficha suja", "transparência", "transparencia", "governabilidade", "CPI", "comissão parlamentar", "deficiente", "PNE", "portador necessidade", "discurso", "plenária", "plenaria", "educação", "educacao", "saúde", "saude", 
+  "PCdoB", "PC do B", "PCdoB_Oficial", "Renato Rabelo", "renatorabelobr", "Alice Portugal", "Alice_Portugal", "Assis Melo", "deputadoassis", "Carlos Eduardo Cadoca", "Cadoca", "Chico Lopes", "Chico_Lopes", "Daniel Almeida", "Delegado Protógenes", "Protógenes", "Evandro Milhomen", "Evandro_Milhomen", "Jandira Feghali", "Jandira", "jandira_feghali", "Jô Moraes", "Jo Moraes", "jomoraes", "João Ananias", "Joao Ananias", "Luciana Santos", "Manuela D'Ávila", "Manuela D'Avila", "Osmar Júnior", "Osmar Junior", "Perpétua Almeida", "Perpétua", "Perpetua Almeida", "Perpetua", "DepPerpetua", "Aldo Rebelo", "aldorebelo", "Eron Bezerra", "EronBezerra65", "Jorge Viana", "JorgeVianaAcre", "Sérgio Petecão", "senadorpetecao",
+  "Gladson Cameli", "DeputadoGladson", "Vanessa Grazziotin", "SouVanessa65",
+  "Cristovam Buarque", "Cristovam", "Buarque", "PDT", "Henrique Eduardo Alves",
+  "Ronaldo Caiado", "deputadocaiado", "Onyx Lorenzoni", "onyxlorenzoni", "Mendonça Filho", "mendonca_filho", "Mandetta", "DepMandetta", "ACM Neto", "acmneto_", "acmneto",
+  "manifestação", "manifestacao", "manifesto", "protesto", "reivindicações", "reivindicacoes", "reivindicação", "reivindicacao", "reivindic")
+candidatos = read.xlsx(file='../../data/2010_Senador_Nominal_Estados.xlsx', sheetIndex=1, stringsAsFactors = FALSE)
+rastrear = c(rastrear, gsub('@', '', unique(candidatos$Usuario[!is.na(candidatos$Usuario)])))
+candidatos = read.xlsx(file='../../data/2010_Governador_Nominal_Estados.xlsx', sheetIndex=1, stringsAsFactors = FALSE)
+rastrear = c(rastrear, gsub('@', '', unique(candidatos$Usuario[!is.na(candidatos$Usuario)])))
+rastrear = unique(rastrear)
+candidatos = read.xlsx(file='../../data/2010_Resultado_1oTurno-rnc.xlsx', sheetIndex=1, stringsAsFactors = FALSE)
+rastrear = c(rastrear, unique(candidatos$Partido))
+rastrear = c(rastrear, gsub(' ', '', unique(candidatos$Partido)))
+rastrear = c(rastrear, "Aecio45Oficial", "Brasil", "Brazil")
+rastrear = unique(rastrear)
+rastrear = unique(c(rastrear, 'correios', 'Correios', 'ECT'))
+save(rastrear, file='../../data/rastrearSemDeputados.Rda')
+load('../../data/rastrearSemDeputados.Rda')
+rastrear = c("copa do mundo", "copa 2014", "copa2014", "copadomundo", "worldcup", "world cup", "gol", "futebol", "goal", "football", "soccer", "Brasil", "Brazil", "BRA", "Colômbia", "Colombia", "COL", "BRAvsCOL", "BRAvCOL", "Copa2014", "CopaDoMundo", "WorldCup", "WorldCup2014", "worldcup2014")
+rastrear = c("copa do mundo", "copa 2014", "copa2014", "copadomundo", "worldcup", "world cup", "gol", "futebol", "goal", "football", "soccer", "Brasil", "Brazil", "BRA", "Alemanha", "ALE", "GER", "BRAvsALE", "BRAvALE", "BRAvsGER", "BRAvGER", "Copa2014", "CopaDoMundo", "WorldCup", "WorldCup2014", "worldcup2014")
+rastrear = unique(rastrear)
+save(rastrear, file='../../data/rastrearCopa.Rda')
+rastrear = c("copa do mundo", "copa 2014", "copa2014", "copadomundo", "worldcup", "world cup", "gol", "futebol", "goal", "football", "soccer", "Brasil", "Brazil", "BRA", "Alemanha", "ALE", "GER", "BRAvsALE", "BRAvALE", "BRAvsGER", "BRAvGER", "Copa2014", "CopaDoMundo", "WorldCup", "WorldCup2014", "worldcup2014")
+rastrear = unique(rastrear)
+save(rastrear, file='../../data/rastrearCopa2.Rda')
+rastrear = gsub('@', '', unique(candidatos$Usuario[!is.na(candidatos$Usuario)]))
+save(rastrear, file='../../data/rastrearSoDeputados.Rda')
+load('../../data/rastrearSoDeputados.Rda')
+## Coloquei alguns deputados no SemDeputados e salvei o restante em rastrear2.Rda
+save(rastrear, file='../../data/rastrear2.Rda')
+load('../../data/rastrear2.Rda')
+load('../../data/rastrear.Rda')
+load('../../data/rastrearSemDeputados.Rda')
+load('../../data/cred_fernando.Rda')
+
+
+# registerTwitterOAuth(cred)
+days = 1
+hours = 1
+minutes = 10
+seconds = 60
+
+dataFinal = as.Date('2014-12-31')
+hoje = Sys.Date()
+
+load("../../data/cred.Rda")
+while (hoje <= dataFinal) {
+  hoje = Sys.Date()
+  print(hoje)
+  arquivo = paste0("../../data/politics-tweets-", hoje, ".json")
+  print(arquivo)
+  load('../../data/rastrearSemDeputados.Rda')
+  print(rastrear)
+  filterStream(arquivo, track = rastrear, timeout = days*hours*minutes*seconds, oauth = cred, language='pt')
+}
+
+load("../../data/cred_fernando.Rda")
+while (hoje <= dataFinal) {
+  hoje = Sys.Date()
+  print(hoje)
+  arquivo = paste0("../../data/politics-tweets-", hoje, "-2.json")
+  print(arquivo)
+  load('../../data/rastrear2.Rda')
+  print(rastrear)
+  filterStream(arquivo, track = rastrear, timeout = days*hours*minutes*seconds, oauth = cred, language='pt')
+}
+
+## LIBERDADES CIVIS
+rastrear = c("liberdades civis", "liberdade civil", "liberdades individuais", "liberdade individual", "aborto", "estatuto do nascituro", "descriminalização maconha", "descriminalizacao maconha", "descriminalizar maconha", "guerra drogas", "liberdade religiosa", "estado laico", "ordem pública", "ordem publica", "divórcio", "divorcio", "planejamento familiar")
+## SEGURANÇA PÚBLICA 
+rastrear = c(rastrear, "seguranca publica", "segurança pública", "valorização polícia", "valorizacao policia", "valorizacao polícia", "valorização polícia", "processual penal", "guerra drogas", "desmilitarização polícia", "desmilitarizacao policia", "desmilitarizacao polícia", "desmilitarização policia", "maioridade penal", "penitenciária", "penitenciaria", "combate organizações criminosas", "combate organizacoes criminosas", "sistema prisional", "setor prisional", "PEC 300", "PEC300", "unificar polícias", "unificar policias", "unificação polícias", "unificação policias", "unificacao polícias", "unificacao policias", "população carcerária", "populacao carcerária", "população carceraria", "populacao carceraria", "pena alternativa", "penas alternativas", "tráfico drogas", "trafico drogas", "crime organizado")
+rastrear = unique(rastrear)
+save(rastrear, file='../../data/rastrear_liberdade_seguranca.Rda')
+
+load("../../data/cred_izabela.Rda")
+while (hoje <= dataFinal) {
+  hoje = Sys.Date()
+  print(hoje)
+  arquivo = paste0("../../data/liberdade-seguranca-tweets-", hoje, ".json")
+  print(arquivo)
+  load('../../data/rastrear_liberdade_seguranca.Rda')
+  print(rastrear)
+  filterStream(arquivo, track = rastrear, timeout = days*hours*minutes*seconds, oauth = cred, language='pt')
+}
+
+while (hoje <= dataFinal) {
+  hoje = Sys.Date()
+  print(hoje)
+  arquivo = paste0("../../data/politics-tweets-", hoje, "-copa.json")
+  print(arquivo)
+  load('../../data/rastrearCopa.Rda')
+  print(rastrear)
+  filterStream(arquivo, track = rastrear, timeout = days*hours*minutes*seconds, oauth = cred, language='pt')
+}
+
+while (hoje <= dataFinal) {
+  hoje = Sys.Date()
+  print(hoje)
+  arquivo = paste0("../../data/politics-tweets-", hoje, "-copa.json")
+  print(arquivo)
+  load('../../data/rastrearCopa2.Rda')
+  print(rastrear)
+  filterStream(arquivo, track = rastrear, timeout = days*hours*minutes*seconds, oauth = cred, language='pt')
+}
+?filterStream
+
+
+
+date()
+
+tweets.df <- parseTweets("../../data/politics-tweets-2014-05-14.json", simplify = TRUE)
+
+tweets.df <- rbind(tweets.df, parseTweets("../../data/politics-tweets-2014-01-25.json", simplify = TRUE))
+
+tweets.df <- rbind(tweets.df, parseTweets("../../data/politics-tweets-2014-01-29.json", simplify = TRUE))
+
+tweets.df <- rbind(tweets.df, parseTweets("../../data/politics-tweets-2014-02-02.json", simplify = TRUE))
+
+tweets.df <- rbind(tweets.df, parseTweets("../../data/politics-tweets-2013-11-09.json", simplify = TRUE))
+
+ignorarData = '16/06'
+datas = seq(as.Date('2014-05-16'), as.Date('2014-06-15'), by = 1)
+tweets = t
+source('funcoesTwitter.R')
+
+tweets = loadTweets()
+tweets$created_at[1:10]
+tweets$created_at2 = strptime(tweets$created_at, "%a %b %d %H:%M:%S %z %Y")
+tweets$created_at2[1:10]
+
+perpetua = tweets[tweets$screen_name == 'DepPerpetua',]
+perpetua[,c('created_at', 'followers_count', 'favourites_count', 'friends_count')]
+perpetua = rbind(perpetua, tweets[grep("Perpétua Almeida|Perpetua Almeida|Deputada Perpétua|Deputada Perpetua|DepPerpetua", tweets$text, ignore.case=TRUE),])
+refPerpetua = referenceByDay(perpetua)
+refPerpetua = refPerpetua[refPerpetua$Dia != ignorarData,]
+refPerpetua
+votosRecebidos2010 = 33235
+refPerpetua$Referências = refPerpetua$Referências / votosRecebidos2010 * 100
+refPerpetua$Referências = refPerpetua$Referências / votosSenador2010[votosSenador2010$estado == "AC",2] * 100000
+refPerpetua$Referências
+
+jandira = tweets[tweets$screen_name == 'jandira_feghali',]
+jandira[,c('created_at', 'followers_count', 'favourites_count', 'friends_count')]
+jandira = rbind(jandira, tweets[grep("Jandira Feghali|Deputada Jandira|jandira_feghali", tweets$text, ignore.case=TRUE),])
+refJandira = referenceByDay(jandira)
+refJandira = refJandira[refJandira$Dia != ignorarData,]
+votosRecebidos2010 = 146260 
+refJandira$Referências = refJandira$Referências / votosRecebidos2010 * 100
+refJandira$Referências = refJandira$Referências / votosSenador2010[votosSenador2010$estado == "RJ",2] * 100000
+refJandira
+
+jo = tweets[tweets$screen_name == 'jomoraes',]
+jo[,c('created_at', 'followers_count', 'favourites_count', 'friends_count')]
+jo = rbind(jo, tweets[grep("Jô Moraes|Jo Moraes|jomoraes", tweets$text, ignore.case=TRUE),])
+refJo = referenceByDay(jo)
+refJo = refJo[refJo$Dia != ignorarData,]
+votosRecebidos2010 = 105977
+refJo$Referências = refJo$Referências / votosRecebidos2010 * 100
+refJo$Referências = refJo$Referências / votosSenador2010[votosSenador2010$estado == "MG",2] * 100000
+refJo
+
+"PCdoB", "PC do B", "PCdoB_Oficial", 
+"Renato Rabelo", "renatorabelobr", 
+"Alice Portugal", "Alice_Portugal", 
+"Assis Melo", "deputadoassis", 
+"Carlos Eduardo Cadoca", "Cadoca", 
+"Chico Lopes", "Chico_Lopes", 
+"Daniel Almeida", "Daniel_PCdoB", 
+"Delegado Protógenes", "Protógenes", 
+"Evandro Milhomen", "Evandro_Milhomen", "DepMilhomen"
+"Aldo Rebelo", "aldorebelo"
+
+votosSenador2010 = data.frame(estado = c("AC","AL","AM","AP","BA","CE","DF","ES","GO","MA","MG","MS","MT","PA","PB","PE","PI","PR","RJ","RN","RO","RR","RS","SC","SE","SP","TO"), quantidade = c(647203,2516128,2940331,65233,11714186,7402395,2236246,3496069,4896460,5425408,19159371,2369390,2894203,4483459,3462215,7882490,3067142,10827579,14706917,2975476,1403973,424456,11514692,6273594,1855805,36778771,1000729))
+
+votosSenador2010[votosSenador2010$estado == "AC",]
+
+refPerpetua$grupo = 'Perpétua'
+refJandira$grupo = 'Jandira'
+refJo$grupo = 'Jô Moraes'
+
+dados = rbind(refPerpetua, refJandira, refJo)
+dados$Dia = as.Date(dados$Dia, format="%d/%m")
+dados
+
+plotReferencias(dados)
+
+dadosProporcionais = dados
+
+plotReferencias(dadosProporcionais)
+
+dadosPorVotoRecebido = rbind(refPerpetua, refJandira, refJo)
+dadosPorVotoRecebido$Dia = as.Date(dadosPorVotoRecebido$Dia, format="%d/%m")
+dadosPorVotoRecebido
+
+plotReferencias(dadosPorVotoRecebido)
+
+source('funcoesTwitter.R', encoding='UTF-8')
+
+tweets = t
+usuarios = data.frame(usuario=c('DepPerpetua', 'jandira_feghali', 'jomoraes', 'aldorebelo', 'renatorabelobr'), nome=c('Perpétua', 'Jandira', 'Jô Moraes', 'Aldo Rebelo', 'Renato Rabelo'))
+datas = seq(as.Date('2014-05-16'), as.Date('2014-06-15'), by = 1)
+stats = statsByUser(tweets, usuarios, 'diferenca', datas)
+stats = statsByUser(tweets, usuarios, 'novos', datas)
+stats = statsByUser(tweets, usuarios, 'todos', datas)
+plotStats(stats)
+
+
+
+
+require(xlsx)
+senador = read.xlsx(file='../../data/2010_Senador_Nominal_Estados.xlsx', sheetIndex=1, stringsAsFactors = FALSE)
+senador = ajustarDataExcel(senador)
+str(senador)
+resultados1 = read.xlsx(file='../../data/2010_Resultado_1oTurno.xlsx', sheetIndex=1, stringsAsFactors = FALSE)
+resultados1 = read.xlsx(file='../../data/2010_Resultado_1oTurno-rnc.xlsx', sheetIndex=1, stringsAsFactors = FALSE)
+resultados1 = ajustarDataExcel(resultados1)
+str(resultados1)
+resultados2 = read.xlsx(file='../../data/2010_Resultado_2oTurno.xlsx', sheetIndex=1, stringsAsFactors = FALSE)
+str(resultados2)
+votos1 = read.xlsx(file='../../data/2010_Votos_1oTurno.xlsx', sheetIndex=1, stringsAsFactors = FALSE)
+str(votos1)
+votos2 = read.xlsx(file='../../data/2010_Votos_2oTurno.xlsx', sheetIndex=1, stringsAsFactors = FALSE)
+str(votos2)
+
+dados = resultados1
+dados = senador
+
+r = dados[!is.na(dados$Data.Ultimo.Tweet) & dados$Data.Ultimo.Tweet > (dados$Data.Recuperacao - 30) & !is.na(dados$Quantidade.Seguidores),]
+r = dados[!is.na(dados$Data.Ultimo.Tweet) & dados$Data.Ultimo.Tweet > (dados$Data.Recuperacao - 30) & !is.na(dados$Quantidade.Seguidores) & dados$Quantidade.Seguidores > 500 & dados$Quantidade.Tweets > 500,]
+r = dados[!is.na(dados$Data.Ultimo.Tweet) & dados$Data.Ultimo.Tweet > (dados$Data.Recuperacao - 30) & !is.na(dados$Quantidade.Seguidores) & dados$Quantidade.Seguidores < 50000,]
+r = dados[!is.na(dados$Data.Ultimo.Tweet) & dados$Data.Ultimo.Tweet > as.Date('2014-01-01') & !is.na(dados$Quantidade.Seguidores),]
+
+require(MASS)
+r[r$Quantidade.Seguidores == max(r$Quantidade.Seguidores),]
+r = r[r$Quantidade.Seguidores != max(r$Quantidade.Seguidores),]
+r = r[r$Quantidade.Seguidores != min(r$Quantidade.Seguidores),]
+r = r[r$VotacaoNominal != max(r$VotacaoNominal),]
+lm1 = lm(VotacaoNominal ~ Quantidade.Seguidores + UF, data = r)
+lm1 = lm(VotacaoNominal ~ Quantidade.Seguidores, data = r)
+lm1 = rlm(VotacaoNominal ~ Quantidade.Seguidores + UF, data = r)
+lm1 = rlm(VotacaoNominal ~ Quantidade.Seguidores, data = r)
+lm1 = glm(VotacaoNominal ~ Quantidade.Seguidores + UF, data = r)
+lm1 = glm(VotacaoNominal ~ Quantidade.Seguidores, data = r)
+summary(lm1)
+plot(r$Quantidade.Seguidores, r$VotacaoNominal)
+abline(lm1)
+plot(lm1)
+r[r$Usuario == 'DepPerpetua',]$Quantidade.Seguidores * lm1$coefficients[2] + lm1$coefficients[1]
+2609 * lm1$coefficients[2] + lm1$coefficients[1]
+lm1$coefficients
+
+require(ggplot2)
+require(rCharts)
+dat = fortify(lm1)
+dat
+names(dat) = gsub('\\.', '_', names(dat))
+dat$Candidato = r$Candidato
+dat$UF = as.factor(r$UF)
+dat$Cargo = r$Cargo
+p1 <- rPlot(VotacaoNominal ~ Quantidade_Seguidores, data = dat, type = 'point')
+p1 <- rPlot(VotacaoNominal ~ Quantidade_Seguidores, data = dat, type = 'point', 
+            color = 'UF',
+            tooltip = "#! function(item){ return 'Quantidade de Seguidores: ' + item.Quantidade_Seguidores + '\\nVotação Nominal: ' + item.VotacaoNominal + '\\n' + item.Cargo + ' / ' + item.UF + ': ' + item.Candidato } !#")
+p1$layer(y = '_fitted', copy_layer = T, type = 'line',
+  color = list(const = 'red'),
+  tooltip = "#! function(item){ return item._fitted } !#")
+# format the x and y axis labels
+p1$guides(x = list(title = "Seguidores no Twitter (mil)", max = 1.05*max(dat$Quantidade_Seguidores)))
+p1$guides(y = list(title = "Votos Recebidos (milhão)", max = 1.05*max(dat$VotacaoNominal)))
+p1$set(title = "Correlação entre Votos Recebidos e Quantidade de Seguidores dos Senadores Eleitos em 2010")
+p1$guides(color = list(
+    numticks = length( levels( dat$UF ) ),
+    labels = as.character( levels( dat$UF ) )
+  ))
+p1
+# p1$setTemplate(
+#   afterScript = 
+# '<script src="//cdnjs.cloudflare.com/ajax/libs/numeral.js/1.4.5/numeral.min.js"></script>'
+# )
+html <- p1$render()
+html <- gsub("\\\\", "\\", html, fixed=T)
+tf <- tempfile(fileext = ".html")
+cat(html, file=tf)
+browseURL(tf)
+
+dadosPerfil = data.frame(grupo = c("Senadores com Perfil Ativo no Twitter", "Senadores com Perfil Inativo no Twitter", "Senadores sem Perfil no Twitter"), valor = c(40, 49 - 40, 54 - 49))
+n3 = nPlot(x = "grupo", y = "valor", data = dadosPerfil, type = "pieChart")
+# n3$templates$script <- "http://timelyportfolio.github.io/rCharts_nvd3_templates/chartWithTitle_styled.html"
+# n3$set(title = "Perfil Ativo/Inativo dos Senadores Eleitos em 2010 no Twitter")
+n3$chart(showLabels=FALSE)
+n3
+html <- n3$render()
+html <- gsub("\\\\", "\\", html, fixed=T)
+tf <- tempfile(fileext = ".html")
+cat(html, file=tf)
+browseURL(tf)
+
+source('funcoesTwitter.R')
+tweets = loadTweets()
+
+usuarios = data.frame(usuario=c('dilmabr', 'AecioNeves', 'eduardocampos40', 'silva_marina'), nome=c('Dilma', 'Aécio', 'Eduardo', 'Marina'))
+datas = seq(as.Date('2014-05-16'), as.Date('2014-06-15'), by = 1)
+statsPresidente = statsByUser(tweets, usuarios, 'diferenca', datas)
+statsPresidente = statsByUser(tweets, usuarios, 'novos', datas)
+statsPresidente = statsByUser(tweets, usuarios, 'todos', datas)
+plotStats(statsPresidente)
+
+## Gráfico de menções dos candidatos à presidência
+usuarios = data.frame(usuario=c('dilmabr', 'AecioNeves', 'eduardocampos40', 'silva_marina'), nome=c('Dilma', 'Aécio', 'Eduardo', 'Marina'), palavras=c('Dima Rouseff','Aécio Neves|Aecio Neves','Eduardo Campos','Marina Silva'))
+refs = referencesByUser(tweets, usuarios, datas)
+plotReferencias(refs)
+
+## Gráfico de menções dos candidatos à presidência, agrupando Eduardo e Marina
+refs2 = refs
+refs2$grupo = as.character(refs2$grupo)
+refs2[refs2$grupo == 'Eduardo',]$Referencias = refs2[refs2$grupo == 'Eduardo',]$Referencias + refs2[refs2$grupo == 'Marina',]$Referencias
+refs2[refs2$grupo == 'Eduardo',]$grupo = 'Eduardo e Marina'
+refs2 = refs2[refs2$grupo != 'Marina',]
+refs2
+plotReferencias(refs2)
+
+pcdob = tweets.df[grep("PCdoB|PC do B|PCdoB_Oficial", tweets.df$text),]
+
+asilo = tweets.df[grep("asilo| DEM |democratas|Democratas", tweets.df$text),]
+
+eleicoes = tweets[grep("eleicao|eleição|eleicoes|eleições|presidente|presidência|presidencia|presidenta|Dilma Rousseff|Aécio Neves|Aecio Neves|Eduardo Campos|Marina Silva", tweets$text, ignore.case=TRUE),]
+
+eleicoes = tweets[grep("eleicao|eleição|eleicoes|eleições|Dilma Rousseff|Aécio Neves|Aecio Neves|Eduardo Campos|Marina Silva", tweets$text, ignore.case=TRUE),]
+
+nrow(asilo)
+
+asilo$text
+```

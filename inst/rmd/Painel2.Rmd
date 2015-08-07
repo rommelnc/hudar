@@ -1,0 +1,500 @@
+
+<div style="text-align:center;"><h2> Análise de tweets </h2></div>
+========================================================
+
+Texto introdutório....
+
+
+```{r echo = F, message = F, cache = F}
+inicio = Sys.time()
+require(rCharts)
+require(RCurl)
+options(RCHART_WIDTH = NA, RCHART_HEIGHT = NA)
+knitr::opts_chunk$set(comment = NA, results = 'asis', tidy = F, message = F)
+source('Painel2.R', encoding='UTF-8')
+```
+
+
+
+
+```{r echo=FALSE, cache = F}
+# setwd("C:/Users/Fernando/Dropbox/Senado/Servidor Remoto/code/raw")
+
+
+
+#variaveis = load('../../data/politics-tweets-2014-07-22-all.Rda')
+variaveis = load('../../data/html/politics-tweets-2014-07-16-to-2014-07-30-eleicoes-resultado.Rda')
+#tweets$text = gsub("[^[:graph:]]", " ",tweets$text)
+
+#if (!('eleicoes' %in% variaveis)) {
+#  source('funcoesTwitter.R', encoding='UTF-8')
+#  eleicoes = recuperarTweetsEleicoes(tweets)
+#}
+
+eleicoes = resultado$tweets[[1]]
+
+
+#eleicoes_full = tweets[grep("eleicao|eleição|eleicoes|eleições|Dilma Rousseff|Aécio Neves|Aecio Neves|Eduardo Campos|Marina Silva|aecio|dilma|marina|presidencia|presidência|lula|presidenta|pt|psb|psdb", tweets$text, ignore.case=TRUE),]
+#eleicoes = eleicoes_full
+```
+
+
+```{r echo=FALSE, cache = F, warning=FALSE}
+
+tweetIndisponivel <- function(tweet) {
+  #return(FALSE)
+  url = paste("https://twitter.com/",tweet$screen_name,"/status/", tweet$id_str, sep="")
+  html <- getURL(url, header = TRUE, nobody = FALSE, followlocation = FALSE, cainfo = system.file("CurlSSL", "cacert.pem", package = "RCurl"))
+  indisponivel = grepl("<h1>Sorry, that page doesn.+t exist!</h1>", html) || grepl("<h1>Desculpe, essa p.+gina n.+o existe!</h1>", html)
+  indisponivel
+}
+
+```
+
+
+
+<style>
+div.tweet_nao_encontrado {
+  font-family: 'Lucida Grande', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 13px;
+  background: #fff;
+  margin: 0 auto;
+  margin: 10px 1px;
+  width: 480px;
+  padding: 10px;
+  /* border-radius */
+  -webkit-border-radius: 5px;
+  -moz-border-radius: 5px;
+  border-radius: 5px;
+  /* box-shadow */
+  -webkit-box-shadow: rgba(0,0,0,0.2) 0px 1px 4px;
+  -moz-box-shadow: rgba(0,0,0,0.2) 0px 1px 4px;
+  box-shadow: rgba(0,0,0,0.2) 0px 1px 4px;
+}
+div.msg_nao_encontrado {
+ text-align:center;
+ font: 18px/24px Georgia,"Times New Roman",Palatino,serif;   
+ font-weight:bold;
+}
+div.name_font {
+ font-weight:bold;
+ font-size: 16px;
+ margin:5px;
+ margin-bottom:-10px;
+}
+div.user_font {
+ font-size: 14px;
+ margin:5px;
+ margin-top:12px;
+ color:#707070;
+}
+span.tweet_date {
+ font-size: 12px;
+ margin:5px;
+ color:#707070;
+}
+span.tweet_retweets {
+ font-size: 10px;
+ margin:5px;
+ color:#707070;
+}
+div.tweet_body {
+ font-weight:bold;
+ margin:5px;
+ font: 18px/24px Georgia,"Times New Roman",Palatino,serif;
+}
+span.color_link {
+ color: #0084b4;
+}
+div.floating {
+ float:left;
+}
+</style>
+
+
+
+<script async src="widgets.js" charset="utf-8"></script>
+
+
+
+<style>#graficoRetweet {
+display: block;
+width: 100%;
+height: 400px;
+float:left;}
+</style>
+```{r echo=FALSE, cache = F, warning=FALSE}
+#-----------------------------------------------RETWEETS--------------------------------------------------
+dataRetweet = byRetweet(eleicoes)
+#graficoRetweet = nPlot(x="type", y="numberOfTweets", data=dataRetweet, type="discreteBarChart")
+#graficoRetweet
+graficoRetweet <- Highcharts$new()
+graficoRetweet$series(data = dataRetweet$numberOfTweets, type = "bar", name = "Retweet ou Tweet?")
+graficoRetweet$xAxis(categories = dataRetweet$type)
+graficoRetweet$set(dom = "graficoRetweet", title="Retweets")
+graficoRetweet$legend(align="center", verticalAlign="top", y=20, itemStyle = list(fontSize="16px", fontWeight="bold"))
+graficoRetweet$show('inline', include_assets = TRUE, cdn = TRUE)
+```
+
+
+
+<style>#graficoPorHora {
+display: block;
+margin-left: auto; 
+margin-right: 5%;
+width: 100%;
+height: 400px;
+float:left;}
+</style>
+```{r echo=FALSE, cache = F, warning=FALSE}
+#-----------------------------------------------HORARIO DO DIA--------------------------------------------------
+#dataPorHora = byTimeOfDay(eleicoes)
+Sys.setlocale("LC_TIME", "English")
+eleicoes$created_at2 = strptime(eleicoes$created_at, "%a %b %d %H:%M:%S %z %Y")
+diff = range(eleicoes$created_at2)
+intervalo = floor(as.numeric(diff[2] - diff[1], units="days")/1.8)
+intervalo = max(intervalo, 1)
+
+dataPorHora = byHours(eleicoes, intervalo)
+graficoPorHora <- Highcharts$new()
+graficoPorHora$chart(type = "spline")
+graficoPorHora$series(data = dataPorHora$Tweets, dashStyle = "longdash", name="Qual horário?")
+categorias = format(as.POSIXlt(dataPorHora$Date), "%d-%b %H:%M")
+graficoPorHora$xAxis(type="category", categories = categorias,labels = list(rotation=-45, step = 4))
+graficoPorHora$set(dom="graficoPorHora")
+graficoPorHora$legend(align="center", verticalAlign="top", y=40, itemStyle = list(fontSize="16px", fontWeight="bold"))
+graficoPorHora$plotOptions(series = list(cursor = 'pointer', point = list(events = list(click = "#! function() {  $('.tweets_horario_class').css('display','none'); var divid = '#tweets_horario'+(this.category.replace(/:|-| /g,'')); $(divid).css('display','block');} !#"))))
+graficoPorHora$show('inline', include_assets = TRUE, cdn = TRUE)
+```
+
+
+<style>#tweets_horario {
+display: block;
+width: 100%;
+float:left;
+}
+
+.tweets_horario_class {
+  width:500px;
+  margin:auto;
+  display:none;
+}
+
+</style>
+
+<div id="tweets_horario">
+```{r echo=FALSE, cache = F, results='asis', warning=FALSE}
+getTopTweetsFromInterval = function(tweets, inicio, final) {
+  #Retorna os tweets mais retweetados de uma determinada hora
+  Sys.setlocale("LC_TIME", "English")
+  tweets$created_at2 = strptime(tweets$created_at, "%a %b %d %H:%M:%S %z %Y")
+  ini = as.POSIXlt(inicio)
+  fim = as.POSIXlt(final)
+  tweetsHour = tweets[tweets$created_at2 > ini,]
+  tweetsHour = tweets[tweetsHour$created_at2 < fim,]
+  tweetsHour = tweetsHour[with(tweetsHour, order(-retweet_count)), ]
+  tweetsHour = tweetsHour[!duplicated(tweetsHour$text), ]
+  tweetsHour
+}
+
+
+for (i in 1:(nrow(dataPorHora)-1)) {
+    #count = ifelse(i < 10, paste("0",i, sep=""), toString(i))
+    #topTweets = getTopTweetsFromHour(eleicoes, count)
+    topTweets = getTopTweetsFromInterval(eleicoes, dataPorHora$Date[i], dataPorHora$Date[i+1])
+    categoria = format(as.POSIXlt(dataPorHora$Date[i]), "%d-%b %H:%M")
+    id = paste("tweets_horario", gsub(":|-| ", "", categoria), sep="")
+    cat("\t<div class='tweets_horario_class' id='", id, "' >\n", sep="")
+      for (j in 1:min(5, nrow(topTweets))) {
+        tweet_id_str = topTweets$id_str[j]
+        tweet_user = topTweets[j,]$screen_name
+        tweet_link = paste("https://twitter.com/",tweet_user,"/status/",tweet_id_str, sep="")
+        if (tweetIndisponivel(topTweets[j,]) == FALSE) {
+          cat("\t\t<blockquote class='twitter-tweet' data-cards='hidden' data-conversation='none'><a href='",tweet_link,"'>Tweet não encontrado...</a></blockquote>\n", sep="")      
+        }
+        else {
+          cat("\t\t<div class='tweet_nao_encontrado'>\n")
+          cat("\t\t\t<div class='msg_nao_encontrado'><hr/><a href='",tweet_link,"' style='text-decoration:none; color:#707070;' > TWEET INDISPONÍVEL</a><hr/></div>\n", sep="")
+          cat("\t\t\t<div class='tweet_header'>\n")
+          cat("\t\t\t\t<div class='floating'><img src='https://abs.twimg.com/sticky/default_profile_images/default_profile_6_normal.png' data-src-2x='https://abs.twimg.com/sticky/default_profile_images/default_profile_6_bigger.png'></div>\n")
+          cat("\t\t\t\t<div class='floating name_font'>",topTweets[j,]$name,"</div><br/>\n", sep="")
+          cat("\t\t\t\t<div class='floating user_font'>",paste("@", tweet_user, sep=""),"</div>\n", sep="")
+          cat("\t\t\t</div>\n")
+          cat("\t\t\t<br/><br/><br/>\n")
+          cat("\t\t\t<div class='tweet_body'>",topTweets[j,]$text,"</div>\n", sep="")
+          cat("\t\t\t<br/>\n")
+          cat("\t\t\t<div id='tweet_footer'><span class='tweet_date'>",topTweets[j,]$created_at,"</span><hr/><span class='tweet_retweets'><strong>",topTweets[j,]$retweet_count,"</strong> RETWEETS</span></div>\n", sep="")
+          cat("\t</div>\n")
+        }
+      }
+    cat("\t</div>\n")
+}
+```
+</div>
+
+<br/>
+<br/>
+
+
+
+<style>#graficoPorHashtag {
+display: block;
+margin-left: auto; 
+margin-right: auto;
+margin-top:100px;
+width: 100%;
+height: 600px;
+float:left;
+}
+</style>
+```{r echo=FALSE, cache = F, results='asis', warning=FALSE}
+#-----------------------------------------------HASHTAGS--------------------------------------------------
+dataPorHashtags = byHashTags(eleicoes)
+graficoPorHashtag <- Highcharts$new()
+graficoPorHashtag$series(data = dataPorHashtags$ocorrencia[1:10], type = "bar", name="Quais as hashtags mais populares?")
+graficoPorHashtag$xAxis(categories = dataPorHashtags$hashtag)
+graficoPorHashtag$set(dom="graficoPorHashtag")
+graficoPorHashtag$legend(align="center", verticalAlign="top", y=40, itemStyle = list(fontSize="16px", fontWeight="bold"))
+graficoPorHashtag$plotOptions(bar = list(cursor = 'pointer', point = list(events = list(click = "#! function() {  $('.tweets_hashtag').css('display','none'); var divid = '#tweets_hashtag'+(this.x+1); $(divid).css('display','block');} !#"))))
+graficoPorHashtag$show('inline', include_assets = TRUE, cdn = TRUE)
+```
+
+
+<style>#tweets_hashtags {
+display: block;
+width: 100%;
+float:left;
+}
+
+.tweets_hashtag {
+  width:500px;
+  margin:auto;
+  display:none;
+}
+
+</style>
+
+
+
+
+<div id="tweets_hashtags">
+```{r echo=FALSE, cache = F, results='asis', warning=FALSE}
+getTopTweetsFromHashTag = function(tweets, hashtag) {
+  #Retorna os tweets mais retweetados que contenham uma determinada hashtag
+  tweetsComHashtag = grep(hashtag,tweets$text)
+  tweetsComHashtag = tweets[tweetsComHashtag,]
+  tweetsComHashtag = tweetsComHashtag[with(tweetsComHashtag, order(-retweet_count)), ]
+  tweetsComHashtag = tweetsComHashtag[!duplicated(tweetsComHashtag$text), ]
+  tweetsComHashtag
+}
+
+
+for (i in 1:10) {
+    topTweets = getTopTweetsFromHashTag(eleicoes, dataPorHashtags$hashtag[i])
+    id = paste("tweets_hashtag", i, sep="")
+    cat("\t<div class='tweets_hashtag' id='", id, "'  >\n", sep="")
+      for (j in 1:min(5, nrow(topTweets))) {
+        tweet_id_str = topTweets$id_str[j]
+        tweet_user = topTweets[j,]$screen_name
+        tweet_link = paste("https://twitter.com/",tweet_user,"/status/",tweet_id_str, sep="")
+        if (tweetIndisponivel(topTweets[j,]) == FALSE) {
+          cat("\t\t<blockquote class='twitter-tweet' data-cards='hidden' data-conversation='none'><a href='",tweet_link,"'>Tweet não encontrado...</a></blockquote>\n", sep="")      
+        }
+        else {
+          cat("\t\t<div class='tweet_nao_encontrado'>\n")
+          cat("\t\t\t<div class='msg_nao_encontrado'><hr/><a href='",tweet_link,"' style='text-decoration:none; color:#707070;' > TWEET INDISPONÍVEL</a><hr/></div>\n", sep="")
+          cat("\t\t\t<div class='tweet_header'>\n")
+          cat("\t\t\t\t<div class='floating'><img src='https://abs.twimg.com/sticky/default_profile_images/default_profile_6_normal.png' data-src-2x='https://abs.twimg.com/sticky/default_profile_images/default_profile_6_bigger.png'></div>\n")
+          cat("\t\t\t\t<div class='floating name_font'>",topTweets[j,]$name,"</div><br/>\n", sep="")
+          cat("\t\t\t\t<div class='floating user_font'>",paste("@", tweet_user, sep=""),"</div>\n", sep="")
+          cat("\t\t\t</div>\n")
+          cat("\t\t\t<br/><br/><br/>\n")
+          cat("\t\t\t<div class='tweet_body'>",topTweets[j,]$text,"</div>\n", sep="")
+          cat("\t\t\t<br/>\n")
+          cat("\t\t\t<div id='tweet_footer'><span class='tweet_date'>",topTweets[j,]$created_at,"</span><hr/><span class='tweet_retweets'><strong>",topTweets[j,]$retweet_count,"</strong> RETWEETS</span></div>\n", sep="")
+          cat("\t</div>\n")
+        }
+      }
+    cat("\t</div>\n")
+}
+```
+</div>
+
+<br/><br/>
+
+
+<style>#graficoMaisFalou {
+display: block;
+margin-left: auto; 
+margin-right: 3%;
+margin-top:100px;
+width: 100%;
+height: 600px;
+float:left;}
+</style>
+```{r echo=FALSE, cache = F, warning=FALSE}
+#-----------------------------------------------MAIS FALOU--------------------------------------------------
+dataPorUsuario = byUsuario(eleicoes)
+maisFalou = data.frame(array(dataPorUsuario$maisFalou[1:10]), names(dataPorUsuario$maisFalou[1:10]))
+rownames(maisFalou) = c()
+names(maisFalou) = c("tweets", "usuario")
+graficoMaisFalou <- Highcharts$new()
+graficoMaisFalou$series(data = maisFalou$tweets, type = "bar", name="Quem mais falou?")
+graficoMaisFalou$xAxis(categories = maisFalou$usuario, allowDecimals=FALSE)
+graficoMaisFalou$set(dom="graficoMaisFalou")
+graficoMaisFalou$legend(align="center", verticalAlign="top", y=40, itemStyle = list(fontSize="16px", fontWeight="bold"))
+graficoMaisFalou$plotOptions(bar = list(cursor = 'pointer', point = list(events = list(click = "#! function() {  $('.tweets_maisfalou_class').css('display','none'); var divid = '#tweets_maisfalou'+(this.x+1); $(divid).css('display','block');} !#"))))
+graficoMaisFalou$show('inline', include_assets = TRUE, cdn = TRUE)
+```
+
+
+<style>#tweets_maisfalou {
+display: block;
+width: 100%;
+float:left;
+}
+
+
+.tweets_maisfalou_class {
+  width:500px;
+  margin:auto;
+  display:none;
+}
+</style>
+
+<div id="tweets_maisfalou">
+```{r echo=FALSE, cache = F, results='asis', warning=FALSE}
+getTopTweetsPostedByUser = function(tweets, user) {
+  #Retorna os tweets mais retweetados de um determinado usuario
+  tweetsUser = tweets[tweets$screen_name == user,]
+  tweetsUser = tweetsUser[with(tweetsUser, order(-retweet_count)), ]
+  tweetsUser = tweetsUser[!duplicated(tweetsUser$text), ]
+  tweetsUser
+}
+
+for (i in 1:10) {
+    topTweets = getTopTweetsPostedByUser(eleicoes, maisFalou$usuario[i])
+    id = paste("tweets_maisfalou", i, sep="")
+    cat("\t<div class='tweets_maisfalou_class' id='", id, "' >\n", sep="")
+      for (j in 1:min(5, nrow(topTweets))) {
+        tweet_id_str = topTweets$id_str[j]
+        tweet_user = topTweets[j,]$screen_name
+        tweet_link = paste("https://twitter.com/",tweet_user,"/status/",tweet_id_str, sep="")
+        if (tweetIndisponivel(topTweets[j,]) == FALSE) {
+          cat("\t\t<blockquote class='twitter-tweet' data-cards='hidden' data-conversation='none'><a href='",tweet_link,"'>Tweet não encontrado...</a></blockquote>\n", sep="")      
+        }
+        else {
+          cat("\t\t<div class='tweet_nao_encontrado'>\n")
+          cat("\t\t\t<div class='msg_nao_encontrado'><hr/><a href='",tweet_link,"' style='text-decoration:none; color:#707070;' > TWEET INDISPONÍVEL</a><hr/></div>\n", sep="")
+          cat("\t\t\t<div class='tweet_header'>\n")
+          cat("\t\t\t\t<div class='floating'><img src='https://abs.twimg.com/sticky/default_profile_images/default_profile_6_normal.png' data-src-2x='https://abs.twimg.com/sticky/default_profile_images/default_profile_6_bigger.png'></div>\n")
+          cat("\t\t\t\t<div class='floating name_font'>",topTweets[j,]$name,"</div><br/>\n", sep="")
+          cat("\t\t\t\t<div class='floating user_font'>",paste("@", tweet_user, sep=""),"</div>\n", sep="")
+          cat("\t\t\t</div>\n")
+          cat("\t\t\t<br/><br/><br/>\n")
+          cat("\t\t\t<div class='tweet_body'>",topTweets[j,]$text,"</div>\n", sep="")
+          cat("\t\t\t<br/>\n")
+          cat("\t\t\t<div id='tweet_footer'><span class='tweet_date'>",topTweets[j,]$created_at,"</span><hr/><span class='tweet_retweets'><strong>",topTweets[j,]$retweet_count,"</strong> RETWEETS</span></div>\n", sep="")
+          cat("\t</div>\n")
+        }
+      }
+    cat("\t</div>\n")
+}
+```
+</div>
+
+<br/><br/>
+
+
+
+<style>#graficoMaisFalado {
+display: block;
+margin-left: auto; 
+margin-right: auto;
+margin-top: 100px;
+width: 100%;
+height: 600px;
+float:left;}
+</style>
+```{r echo=FALSE, cache = F, warning=FALSE}
+#-----------------------------------------------MAIS FALADO--------------------------------------------------
+#dataPorUsuario = byUsuario(eleicoes)
+maisFalado = data.frame(array(dataPorUsuario$maisFalado[1:10]), names(dataPorUsuario$maisFalado[1:10]))
+rownames(maisFalado) = c()
+names(maisFalado) = c("tweets", "usuario")
+graficoMaisFalado <- Highcharts$new()
+graficoMaisFalado$series(data = maisFalado$tweets, type = "bar", name="Quem foi mais falado?")
+graficoMaisFalado$xAxis(categories = maisFalado$usuario, allowDecimals=FALSE)
+graficoMaisFalado$set(dom="graficoMaisFalado")
+graficoMaisFalado$legend(align="center", verticalAlign="top", y=20, itemStyle = list(fontSize="16px", fontWeight="bold"))
+graficoMaisFalado$plotOptions(bar = list(cursor = 'pointer', point = list(events = list(click = "#! function() {  $('.tweets_maisfalado_class').css('display','none'); var divid = '#tweets_maisfalado'+(this.x+1); $(divid).css('display','block');} !#"))))
+graficoMaisFalado$show('inline', include_assets = TRUE, cdn = TRUE)
+```
+
+
+<style>#tweets_maisfalado {
+display: block;
+width: 100%;
+float:left;
+}
+
+.tweets_maisfalado_class {
+  width:500px;
+  margin:auto;
+  display:none;
+}
+</style>
+
+<div id="tweets_maisfalado">
+```{r echo=FALSE, cache = F, results='asis', warning=FALSE}
+getTopTweetsFromUser = function(tweets, user) {
+  #Retorna os tweets mais retweetados de um determinado usuario
+  tweetsUser = tweets[tweets$screen_name == user,]
+  tweetsUser = rbind(tweetsUser, tweets[grep(paste("@", user, sep=""), eleicoes$text),])
+  tweetsUser = tweetsUser[with(tweetsUser, order(-retweet_count)), ]
+  tweetsUser = tweetsUser[!duplicated(tweetsUser$text), ]
+  tweetsUser
+}
+
+for (i in 1:10) {
+    topTweets = getTopTweetsFromUser(eleicoes, maisFalado$usuario[i])
+    id = paste("tweets_maisfalado", i, sep="")
+    cat("\t<div class='tweets_maisfalado_class' id='", id, "' >\n", sep="")
+      for (j in 1:min(5, nrow(topTweets))) {
+        tweet_id_str = topTweets$id_str[j]
+        tweet_user = topTweets[j,]$screen_name
+        tweet_link = paste("https://twitter.com/",tweet_user,"/status/",tweet_id_str, sep="")
+        if (tweetIndisponivel(topTweets[j,]) == FALSE) {
+          cat("\t\t<blockquote class='twitter-tweet' data-cards='hidden' data-conversation='none'><a href='",tweet_link,"'>Tweet não encontrado...</a></blockquote>\n", sep="")      
+        }
+        else {
+          cat("\t\t<div class='tweet_nao_encontrado'>\n")
+          cat("\t\t\t<div class='msg_nao_encontrado'><hr/><a href='",tweet_link,"' style='text-decoration:none; color:#707070;' > TWEET INDISPONÍVEL</a><hr/></div>\n", sep="")
+          cat("\t\t\t<div class='tweet_header'>\n")
+          cat("\t\t\t\t<div class='floating'><img src='https://abs.twimg.com/sticky/default_profile_images/default_profile_6_normal.png' data-src-2x='https://abs.twimg.com/sticky/default_profile_images/default_profile_6_bigger.png'></div>\n")
+          cat("\t\t\t\t<div class='floating name_font'>",topTweets[j,]$name,"</div><br/>\n", sep="")
+          cat("\t\t\t\t<div class='floating user_font'>",paste("@", tweet_user, sep=""),"</div>\n", sep="")
+          cat("\t\t\t</div>\n")
+          cat("\t\t\t<br/><br/><br/>\n")
+          cat("\t\t\t<div class='tweet_body'>",topTweets[j,]$text,"</div>\n", sep="")
+          cat("\t\t\t<br/>\n")
+          cat("\t\t\t<div id='tweet_footer'><span class='tweet_date'>",topTweets[j,]$created_at,"</span><hr/><span class='tweet_retweets'><strong>",topTweets[j,]$retweet_count,"</strong> RETWEETS</span></div>\n", sep="")
+          cat("\t</div>\n")
+        }
+      }
+    cat("\t</div>\n")
+}
+
+```
+</div>
+
+
+
+
+
+```{r echo=FALSE, warning=FALSE}
+fim = Sys.time()
+# print('Tempo total:')
+# print(fim - inicio)
+```
+
