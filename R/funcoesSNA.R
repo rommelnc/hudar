@@ -1,6 +1,6 @@
 analiseEleicoesPorTema = function(arquivo, above = .01) {
-  source('criarGrafo.R', encoding='UTF-8')
-  source('funcoesTwitter.R', encoding='UTF-8')
+  source('R/criarGrafo.R', encoding='UTF-8')
+  source('R/funcoesTwitter.R', encoding='UTF-8')
   
   variaveis = load(arquivo)
   
@@ -15,8 +15,8 @@ analiseEleicoesPorTema = function(arquivo, above = .01) {
 }
 
 analiseTweetsPorTema = function(arquivo, palavras, above = .01) {
-  source('criarGrafo.R', encoding='UTF-8')
-  source('funcoesTwitter.R', encoding='UTF-8')
+  source('R/criarGrafo.R', encoding='UTF-8')
+  source('R/funcoesTwitter.R', encoding='UTF-8')
   
   variaveis = load(arquivo)
   
@@ -29,8 +29,9 @@ analiseTweetsPorTema = function(arquivo, palavras, above = .01) {
 }
 
 analisePorTema = function(tweets, arquivo, palavras, above = .01) {
-  source('criarGrafo.R', encoding='UTF-8')
-  source('funcoesTwitter.R', encoding='UTF-8')
+  source('R/criarGrafo.R', encoding='UTF-8')
+  source('R/funcoesTwitter.R', encoding='UTF-8')
+  source('R/utils.R', encoding='UTF-8')
   
   textos = removerAcento(tweets$text)
   
@@ -45,45 +46,14 @@ analisePorTema = function(tweets, arquivo, palavras, above = .01) {
   peso = recuperarPesoAresta(grafo, .97)
   g = delete.edges(grafo, which(E(grafo)$weight < peso))
   
-  temas = recuperarTemas(g)
+  res = recuperarTemas(g)
+  
+  temas <- res$temas
+  g <- res$grafo
+  networkData <- res$networkData
   
   ideg = degree(g, mode = "in", loops = F)
   V(g)$label.cex = (ideg / max(ideg)) + 0.5
-  
-  # if we wanted to use the fastgreedy.community agorithm we would do
-  fc = fastgreedy.community(g)
-  com = community.to.membership(g, fc$merges, steps= which.max(fc$modularity)-1)
-  
-  require(RColorBrewer)
-  # create nice colors for each cluster
-  gbrew = colorRampPalette(brewer.pal(8, "Dark2"))(length(temas)+1)
-  gpal = rgb2hsv(col2rgb(gbrew))
-  k = length(temas)+1
-  corOutros = hsv(gpal[1,k], gpal[2,k], gpal[3,k], alpha=0.5)
-  gcols = rep(corOutros, fc$vcount)
-  for (k in 0:length(temas)-1) {
-    gcols[com$membership == k] = hsv(gpal[1,k+1], gpal[2,k+1], gpal[3,k+1], alpha=0.5)
-  }
-  V(g)$color = gcols
-  
-  # Salvar imagem do grafo dos temas do dia
-  png(filename = sub("\\.Rda", '-themes\\.png', arquivo), width=3840, height=3840, res=300)
-  plot.igraph(g, 
-              vertex.label = V(g)$name, 
-              #vertex.label.cex = ideg / max(ideg) * 2, 
-              #vertex.label.color = "gray20",
-              vertex.size = ideg + 2, 
-              #vertex.size2 = 30,
-              #vertex.color = "gray90", 
-              #vertex.frame.color = "gray20",
-              #vertex.shape = "rectangle",
-              edge.arrow.size=0.2, 
-              #edge.color=col, 
-              edge.width = E(g)$weight / peso + 1,
-              edge.curved = T, 
-              layout = layout.auto(g)
-  )
-  dev.off()
   
   ## Simplificar temas, se houver tema com mais de 10 palavras
   temas.simples = temas
@@ -92,7 +62,7 @@ analisePorTema = function(tweets, arquivo, palavras, above = .01) {
   }
   
   ## Recuperar tweets por tema simplificado (combinações no máximo das 10 palavras mais frequentes)
-  resultado = recuperarTweetsPorTema(temas.simples, tweets, T)
+  resultado = recuperarTweetsPorTema(temas.simples, tweets, TRUE)
   ## Reordenar temas de acordo com importância (quantidade de usuários envolvidos)
   qtdUsuarios = lapply(resultado$tweets, FUN = function(x) {length(unique(x$screen_name))})
   qtdTweets = lapply(resultado$tweets, FUN = nrow)
@@ -101,7 +71,8 @@ analisePorTema = function(tweets, arquivo, palavras, above = .01) {
   resultado$qtdUsuarios = qtdUsuarios[ordem]
   resultado$qtdTweets = qtdTweets[ordem]
   resultado$tweets = resultado$tweets[ordem]
-  resultado$imagem = sub("\\.Rda", '\\.png', arquivo)
+  resultado$networkData = networkData
+  # resultado$imagem = sub("\\.Rda", '\\.png', arquivo)
   #   ## Pensar em mudar a forma de representar o resultado no futuro como se fossem objetos Tema com atributos
   #   for (i in 1:length(resultado)) {
   #     resultado$temas[[i]]$palavras = resultado$temas[[1]]
@@ -115,7 +86,7 @@ analisePorTema = function(tweets, arquivo, palavras, above = .01) {
   analiseGeralDosTemas(resultado, palavras, tweets, arquivo)
   
   ## Gera painel com grafo de usuários e gráficos de barra de mais twitados, etc
-  analiseDosTemas(resultado, arquivo)
+  # analiseDosTemas(resultado, arquivo)
   
   resultado
 }
@@ -187,13 +158,16 @@ analiseGeralDosTemas = function(resultado, palavras, tweets, arquivo) {
   #   writeLines(c("load('tweets.Rda')", "load('temas.Rda')", "load('grafo.Rda')", "load('local.Rda')", "index = T"),
   #              fileConn)
   #   close(fileConn)
+  
+  networkData <- resultado$networkData
+  
   index = T
   knitr::knit2html(input='PainelGraficosBarra.Rmd', output=sub("\\.Rda", '-plots\\.html', arquivo))
 }
 
 analiseDosTemas = function(resultado, arquivo) {
-  source('criarGrafo.R', encoding='UTF-8')
-  source('funcoesTwitter.R', encoding='UTF-8')
+  source('R/criarGrafo.R', encoding='UTF-8')
+  source('R/funcoesTwitter.R', encoding='UTF-8')
   for (i in 1:length(resultado$temas)) {
     # Salva grafo de usuários por tema
     temp = paste0('-theme', i, '-users\\.png')
@@ -242,6 +216,7 @@ recuperarTweetsPorTema = function(temas, tweets, debug = F) {
 
 
 recuperarTweetsPorPalavras = function(palavras, tweets, debug = F) {
+  source('R/utils.R')
   palavras = removerAcento(palavras)
   textos = tweets$text
   textos = removerAcento(textos)
@@ -280,6 +255,7 @@ recuperarTweetsPorPalavras = function(palavras, tweets, debug = F) {
 
 
 recuperarTemas = function(g) {
+  require(igraph)
   fc <- fastgreedy.community(g)
   table(fc$membership)
   comunidades = as.integer(names(table(fc$membership)[table(fc$membership) > 2]))
@@ -289,7 +265,48 @@ recuperarTemas = function(g) {
   for (i in 1:qtdComunidades) {
     temas[[i]] = fc$names[which(fc$membership == comunidades[i])]
   }
-  temas
+  
+  g <- defineTopicsColor(g, fc$membership)
+  
+  networkData <- createNetworkData(g, temas, fc$membership)
+  
+  list(temas = temas, grafo = g, networkData = networkData)
+}
+
+defineTopicsColor <- function(graph, membership) {
+  topics.size <- length(unique(membership))
+  require(RColorBrewer)
+  # create nice colors for each cluster
+  gbrew <- colorRampPalette(brewer.pal(8, "Dark2"))(topics.size+1)
+  gpal <- rgb2hsv(col2rgb(gbrew))
+  k <- topics.size+1
+  color.others<- hsv(gpal[1,k], gpal[2,k], gpal[3,k], alpha=0.5)
+  gcols <- rep(color.others, length(membership))
+  for (k in 0:topics.size-1) {
+    gcols[membership == k] <- hsv(gpal[1,k+1], gpal[2,k+1], gpal[3,k+1], alpha=0.5)
+  }
+  V(graph)$color <- gcols
+  
+  graph
+}
+
+createNetworkData <- function(graph, topics, memberships, others.label = 'outros') {
+  ideg <- degree(graph, mode = "in", loops = F)
+  nodes <- data.frame(name = as.factor(V(graph)$name), group = as.vector(memberships), size = (ideg + 2) * 3)
+  for (k in 1:length(topics)) {
+    nodes$group[nodes$name %in% topics[[k]]] = paste0(topics[[k]], collapse = ' / ')
+  }
+  nodes$group[!nodes$name %in% unlist(topics)] = others.label
+  
+  m <- get.data.frame(graph)
+  
+  source.node <- sapply(m$from, function(x) which(levels(nodes$name) == x))
+  target.node <- sapply(m$to, function(x) which(levels(nodes$name) == x))
+  
+  networkData <- data.frame(source = source.node-1, target = target.node-1, value = scale(m$weight, center = FALSE))
+  networkData$nodes <- nodes
+  
+  networkData
 }
 
 

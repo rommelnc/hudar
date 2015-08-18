@@ -1,80 +1,3 @@
-
-
-
-source('criarGrafo.R')
-source('funcoesTwitter.R')
-
-load('../../data/politics-tweets-2014-05-16.Rda')
-eleicoes = pesquisarTweets(tweets)
-palavras = recuperarPalavras()
-
-textos = removerAcento(eleicoes$text)
-textos
-grafo = criarGrafo(textos, remove = palavras)
-grafo = criarGrafo(eleicoes$text)
-matriz = montarMatrizUsuarios(eleicoes, T)
-grafo = criarGrafoDePara(matriz)
-
-temas = recuperarTemas(grafo)
-temas
-
-peso = recuperarPesoAresta(grafo, .97)
-g <- delete.edges(grafo, which(E(grafo)$weight < peso))
-
-temas = recuperarTemas(g)
-temas
-
-ideg = degree(g, mode = "in", loops = F)
-
-V(g)$label.cex = (ideg / max(ideg)) + 0.5
-
-# if we wanted to use the fastgreedy.community agorithm we would do
-fc <- fastgreedy.community(g)
-com<-community.to.membership(g, fc$merges, steps= which.max(fc$modularity)-1)
-V(g)$color <- com$membership+1
-
-require(RColorBrewer)
-# create nice colors for each cluster
-# gbrew = colorRampPalette(brewer.pal(8, "Dark2"))(max(com$membership)+1)
-gbrew = colorRampPalette(brewer.pal(8, "Dark2"))(length(temas)+1)
-gpal = rgb2hsv(col2rgb(gbrew))
-k = length(temas)+1
-corOutros = hsv(gpal[1,k], gpal[2,k], gpal[3,k], alpha=0.5)
-gcols = rep(corOutros, fc$vcount)
-for (k in 0:length(temas)-1) {
-  gcols[com$membership == k] = hsv(gpal[1,k+1], gpal[2,k+1], gpal[3,k+1], alpha=0.5)
-}
-V(g)$color = gcols
-gcols
-
-plot.igraph(g, 
-            vertex.label = V(g)$name, 
-            #vertex.label.cex = ideg / max(ideg) * 2, 
-            #vertex.label.color = "gray20",
-            vertex.size = ideg + 2, 
-            #vertex.size2 = 30,
-            #vertex.color = "gray90", 
-            #vertex.frame.color = "gray20",
-            #vertex.shape = "rectangle",
-            edge.arrow.size=0.5, 
-            #edge.color=col, 
-            edge.width = E(g)$weight / peso + 1,
-            edge.curved = T, 
-            layout = layout.auto(g)
-            )
-tkplot(g)
-
-g$layout = layout.fruchterman.reingold
-g$layout = layout.sphere
-g$layout = layout.spring
-g$layout = layout.kamada.kawai
-g$layout = layout.reingold.tilford
-g$layout = layout.fruchterman.reingold
-g$layout = layout.graphopt
-plot(g, vertex.label=NA)
-plot(g)
-
-
 source('funcoesTwitter.R', encoding='UTF-8')
 dias = seq(as.Date('2014-07-16'), as.Date('2014-07-30'), by = 1)
 dias = seq(as.Date('2014-07-01'), as.Date('2014-07-30'), by = 1)
@@ -186,13 +109,19 @@ load(paste0('../../data/politics-tweets-', datas, '-eleicoes-all-resultado.Rda',
 analiseDosTemas(resultado, arquivo)
 
 
-source('funcoesTwitter.R', encoding='UTF-8')
-source('funcoesSNA.R', encoding='UTF-8')
+source('R/funcoesTwitter.R', encoding='UTF-8')
+source('R/funcoesSNA.R', encoding='UTF-8')
 arquivos = list.files('../../data/', pattern='2014-08-[[:digit:]]*-all.Rda', full.names=TRUE)
 ## Analisar apenas os últimos X dias
 arquivos = arquivos[(length(arquivos)-13):length(arquivos)]
 
-
+# Tweets sobre as eleições
+arquivo = 'data/politics-tweets-2014-08-17-to-2014-08-20-eleicoes-all.Rda'
+analiseEleicoesPorTema(arquivo)
+load('../../data/politics-tweets-2014-08-17-to-2014-08-20-eleicoes-all-resultado.Rda')
+load(arquivo)
+analiseGeralDosTemas(resultado, palavras, tweets, arquivo)
+analiseDosTemas(resultado, arquivo)
 
 # Tweets sobre educação da última semana
 tweets = recuperarTweetsEmArquivos(arquivos, 'educação|educacao|educaçao|educacão')
@@ -229,7 +158,7 @@ analiseDosTemas(resultado, arquivo)
 
 # Tweets sobre corrupção da última semana
 tweets = recuperarTweetsEmArquivos(arquivos, 'corrupcao|corrupção|corrupçao|corrupcão')
-arquivo = '../../data/politics-tweets-2014-08-17-to-2014-08-20-corrupcao-all.Rda'
+arquivo = 'data/politics-tweets-2014-08-17-to-2014-08-20-corrupcao-all.Rda'
 save(tweets, file=arquivo)
 palavras = c('corrupcao','corrupção','corrupçao','corrupcão')
 analiseTweetsPorTema(arquivo, palavras)

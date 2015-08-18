@@ -15,9 +15,20 @@ Depends:
     plotrix (>= 3.5-1),
     googleVis (>= 0.4.5),
     rCharts (>= 0.4.5),
-    rmongodb (>= 1.8.0),
-    gsubfn (>= 0.6-6)
+    rmongodb (>= 1.6.5),
+    gsubfn (>= 0.6-6),
+    igraph(>= 1.0.1)
 Description: This package is about ...
 License: GPL
 Collate:
+  Painel1.R
+  Painel2.R
+  criarGrafo.R
+  criarMapa.R
+  funcoesSNA.R
+  funcoesTwitter.R
+  parametros.R
+  salvaLinkEleicoes.R
+  tweetsToMongoBatch.R
+  utils.R
     
