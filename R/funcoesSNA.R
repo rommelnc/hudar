@@ -33,10 +33,10 @@ analisePorTema = function(tweets, arquivo, palavras, above = .01) {
   source('R/funcoesTwitter.R', encoding='UTF-8')
   source('R/utils.R', encoding='UTF-8')
   
-  textos = removerAcento(tweets$text)
-  
   ## Remover urls
   textos = gsub('https?://.*[^(\n|\t| |\")][^(\n|\t| |\")]+', ' ',textos)
+  
+  textos = removerAcento(tweets$text)
   
   # Salva grafo de temas do dia
   grafo = criarGrafo(textos, remove = palavras, above)
@@ -51,6 +51,7 @@ analisePorTema = function(tweets, arquivo, palavras, above = .01) {
   temas <- res$temas
   g <- res$grafo
   networkData <- res$networkData
+  nodes <- res$nodes
   
   ideg = degree(g, mode = "in", loops = F)
   V(g)$label.cex = (ideg / max(ideg)) + 0.5
@@ -72,6 +73,7 @@ analisePorTema = function(tweets, arquivo, palavras, above = .01) {
   resultado$qtdTweets = qtdTweets[ordem]
   resultado$tweets = resultado$tweets[ordem]
   resultado$networkData = networkData
+  resultado$nodes = nodes
   # resultado$imagem = sub("\\.Rda", '\\.png', arquivo)
   #   ## Pensar em mudar a forma de representar o resultado no futuro como se fossem objetos Tema com atributos
   #   for (i in 1:length(resultado)) {
@@ -151,8 +153,8 @@ analiseGeralDosTemas = function(resultado, palavras, tweets, arquivo) {
   #   save(temas, file='temas.Rda')
   #   grafo = g
   #   save(grafo, file='grafo.Rda')
-  local = sub("\\.Rda", '-themes.png', arquivo)
-  local = sub("../../data/", '', local)
+  # local = sub("\\.Rda", '-themes.png', arquivo)
+  # local = sub("../../data/", '', local)
   #   save(local, file='local.Rda')
   #   save(listaTemas, file='listaTemas.Rda')
   #   writeLines(c("load('tweets.Rda')", "load('temas.Rda')", "load('grafo.Rda')", "load('local.Rda')", "index = T"),
@@ -160,9 +162,10 @@ analiseGeralDosTemas = function(resultado, palavras, tweets, arquivo) {
   #   close(fileConn)
   
   networkData <- resultado$networkData
+  nodes <- resultado$nodes
   
-  index = T
-  knitr::knit2html(input='PainelGraficosBarra.Rmd', output=sub("\\.Rda", '-plots\\.html', arquivo))
+  index = TRUE
+  knitr::knit2html(input='inst/rmd/PainelGraficosBarra.Rmd', output=sub("\\.Rda", '-plots\\.html', arquivo))
 }
 
 analiseDosTemas = function(resultado, arquivo) {
@@ -268,9 +271,9 @@ recuperarTemas = function(g) {
   
   g <- defineTopicsColor(g, fc$membership)
   
-  networkData <- createNetworkData(g, temas, fc$membership)
+  res <- createNetworkData(g, temas, fc$membership)
   
-  list(temas = temas, grafo = g, networkData = networkData)
+  list(temas = temas, grafo = g, networkData = res$networkData, nodes = res$nodes)
 }
 
 defineTopicsColor <- function(graph, membership) {
@@ -304,9 +307,8 @@ createNetworkData <- function(graph, topics, memberships, others.label = 'outros
   target.node <- sapply(m$to, function(x) which(levels(nodes$name) == x))
   
   networkData <- data.frame(source = source.node-1, target = target.node-1, value = scale(m$weight, center = FALSE))
-  networkData$nodes <- nodes
   
-  networkData
+  list(networkData = networkData, nodes = nodes)
 }
 
 

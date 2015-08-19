@@ -162,7 +162,7 @@ arquivo = 'data/politics-tweets-2014-08-17-to-2014-08-20-corrupcao-all.Rda'
 save(tweets, file=arquivo)
 palavras = c('corrupcao','corrupção','corrupçao','corrupcão')
 analiseTweetsPorTema(arquivo, palavras)
-load('../../data/politics-tweets-2014-08-17-to-2014-08-20-corrupcao-all-resultado.Rda')
+load('data/politics-tweets-2014-08-17-to-2014-08-20-corrupcao-all-resultado.Rda')
 load(arquivo)
 analiseGeralDosTemas(resultado, palavras, tweets, arquivo)
 analiseDosTemas(resultado, arquivo)

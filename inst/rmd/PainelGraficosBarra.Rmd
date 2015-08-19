@@ -4,7 +4,7 @@ require(rCharts)
 require(RCurl)
 options(RCHART_WIDTH = NA, RCHART_HEIGHT = NA)
 knitr::opts_chunk$set(comment = NA, results = 'asis', tidy = F, message = F)
-source('Painel2.R', encoding='UTF-8')
+source('../../R/Painel2.R', encoding='UTF-8')
 
 tweets$text = gsub("[^[:graph:]]", " ",tweets$text)
 # source('parametros.R', encoding='UTF-8')
@@ -19,14 +19,14 @@ Texto introdutório....
 
 <script async src="widgets.js" charset="utf-8"></script>
 
-```{r temas, results='asis', echo=FALSE, warning=FALSE}
+```{r temas.grafo, results='asis', echo=FALSE, warning=FALSE}
 require(networkD3)
 
 ## Fazer um script para recuperar os tweets que possuem tanto a palavra clicada como suas vizinhas / adjacentes
 MyClickScript <- 'alert("You clicked " + d.name + " which is in row " +
        (d.index + 1) +  " of your original R data frame");'
 
-forceNetwork(Links = networkData, Nodes = networkData$nodes,
+forceNetwork(Links = networkData, Nodes = nodes,
              Source = "source", Target = "target",
              Value = "value", NodeID = "name",
              Group = "group", Nodesize = 'size', 
@@ -41,7 +41,7 @@ forceNetwork(Links = networkData, Nodes = networkData$nodes,
 ```{r temas, results='asis', echo=FALSE, warning=FALSE}
 
 # cat("<div style='display:none; height:300px; ' >\n", sep="")
-cat(paste0("<img width='1200' src='", local, "'/>"))
+# cat(paste0("<img width='1200' src='", local, "'/>"))
 # cat("</div>\n")
 
 if (index) {
